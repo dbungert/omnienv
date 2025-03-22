@@ -27,48 +27,49 @@ func TestCheckBad(t *testing.T) {
 	assert.Equal(t, 1, code)
 }
 
-func TestLaunch(t *testing.T) {
-	var args [][]string
-	restore := Patch(&command, func(arg0 string, rest ...string) *exec.Cmd {
-		args = append(args, append([]string{arg0}, rest...))
-		return exec.Command("/bin/true")
-	})
-	defer restore()
+var launchTest = []struct {
+	config Config
 
-	launch(Config{
+	cmds [][]string
+}{{
+	config: Config{
 		Label:  "l",
 		Series: "s",
-	})
-	expected := [][]string{
+	},
+	cmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s"},
 		[]string{
 			"lxc", "exec", "l-s", "--",
 			"cloud-init", "status", "--wait",
 		},
-	}
-	assert.Equal(t, expected, args)
-}
-
-func TestLaunchVM(t *testing.T) {
-	var args [][]string
-	restore := Patch(&command, func(arg0 string, rest ...string) *exec.Cmd {
-		args = append(args, append([]string{arg0}, rest...))
-		return exec.Command("/bin/true")
-	})
-	defer restore()
-
-	launch(Config{
+	},
+}, {
+	config: Config{
 		Label:          "l",
 		Series:         "s",
 		Virtualization: "vm",
-	})
-	expected := [][]string{
+	},
+	cmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s", "--vm"},
 		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
 		[]string{
 			"lxc", "exec", "l-s", "--",
 			"cloud-init", "status", "--wait",
 		},
+	},
+}}
+
+func TestLaunch(t *testing.T) {
+	var cmds [][]string
+	restore := Patch(&command, func(arg0 string, rest ...string) *exec.Cmd {
+		cmds = append(cmds, append([]string{arg0}, rest...))
+		return exec.Command("/bin/true")
+	})
+	defer restore()
+
+	for _, test := range launchTest {
+		cmds = [][]string{}
+		launch(test.config)
+		assert.Equal(t, test.cmds, cmds)
 	}
-	assert.Equal(t, expected, args)
 }
