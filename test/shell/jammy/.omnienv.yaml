@@ -1,0 +1,3 @@
+series: jammy
+project: oe-shell-test
+backend: lxd

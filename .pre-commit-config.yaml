@@ -1,0 +1,14 @@
+repos:
+  # more details in https://github.com/TekWizely/pre-commit-golang/blob/master/sample-config.yaml
+- repo: https://github.com/tekwizely/pre-commit-golang
+  rev: v1.0.0-rc.1
+  hooks:
+  - id: go-build-repo-mod
+  - id: go-mod-tidy-repo
+  - id: go-test-repo-mod
+  # - id: go-sec-repo-mod
+  # go install honnef.co/go/tools/cmd/staticcheck@latest
+  - id: go-staticcheck-repo-mod
+  - id: go-fmt
+  # go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+  - id: golangci-lint-mod

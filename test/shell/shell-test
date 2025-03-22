@@ -1,0 +1,21 @@
+#!/usr/bin/python3
+
+"""Getting a shell in the target environment with all the correct behavior in
+place, correct across all series, backends, and virtualizations has some
+pitfalls.  Test for the known challenges in getting all this correct."""
+
+import os
+import unittest
+
+
+class Tests(unittest.TestCase):
+    def test_pts_stat(self):
+        stat = os.stat("/dev/pts/2")
+        self.assertEqual(os.getuid(), stat.st_uid, "/dev/pts/2 uid")
+
+    def test_has_home(self):
+        self.assertTrue(os.environ["HOME"])
+
+
+if __name__ == "__main__":
+    unittest.main()

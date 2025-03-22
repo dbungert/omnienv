@@ -1,0 +1,3 @@
+series: focal
+project: oe-shell-test
+backend: lxd
