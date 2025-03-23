@@ -35,7 +35,8 @@ func TestCheckBad(t *testing.T) {
 }
 
 var launchTests = []struct {
-	config Config
+	config   Config
+	mockCmds [][]string
 
 	runCmds [][]string
 }{{
@@ -43,6 +44,7 @@ var launchTests = []struct {
 		Label:  "l",
 		Series: "s",
 	},
+	mockCmds: [][]string{[]string{"true"}, []string{"true"}},
 	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s"},
 		[]string{
@@ -56,6 +58,7 @@ var launchTests = []struct {
 		Series:         "s",
 		Virtualization: "vm",
 	},
+	mockCmds: [][]string{[]string{"true"}, []string{"true"}, []string{"true"}},
 	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s", "--vm"},
 		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
@@ -67,15 +70,15 @@ var launchTests = []struct {
 }}
 
 func TestLaunch(t *testing.T) {
-	var runCmds [][]string
-	restore := Patch(&command, func(arg0 string, rest ...string) *exec.Cmd {
-		runCmds = append(runCmds, append([]string{arg0}, rest...))
-		return exec.Command("true")
-	})
-	defer restore()
-
 	for _, test := range launchTests {
-		runCmds = [][]string{}
+		idx := -1
+		runCmds := [][]string{}
+		restore := Patch(&command, func(arg0 string, rest ...string) *exec.Cmd {
+			runCmds = append(runCmds, append([]string{arg0}, rest...))
+			idx += 1
+			return exec.Command(test.mockCmds[idx][0], test.mockCmds[idx][1:]...)
+		})
+		defer restore()
 		launch(test.config)
 		assert.Equal(t, test.runCmds, runCmds)
 	}
