@@ -131,7 +131,7 @@ func TestStartFailedUIS(t *testing.T) {
 	assert.NotNil(t, start(mis, Config{}))
 }
 
-func mockOperation(t *testing.T, mis *mocks.MockInstanceServer, err error) {
+func mockUpdateInstanceState(t *testing.T, mis *mocks.MockInstanceServer, err error) {
 	op := mocks.NewMockOperation(t)
 	mis.On("UpdateInstanceState", "-", mock.Anything, "").Return(op, nil)
 	op.On("Wait").Return(err)
@@ -139,13 +139,13 @@ func mockOperation(t *testing.T, mis *mocks.MockInstanceServer, err error) {
 
 func TestStart(t *testing.T) {
 	mis := mocks.NewMockInstanceServer(t)
-	mockOperation(t, mis, nil)
+	mockUpdateInstanceState(t, mis, nil)
 	assert.Nil(t, start(mis, Config{}))
 }
 
 func TestStartFailedWait(t *testing.T) {
 	mis := mocks.NewMockInstanceServer(t)
-	mockOperation(t, mis, fmt.Errorf("error"))
+	mockUpdateInstanceState(t, mis, fmt.Errorf("error"))
 	assert.NotNil(t, start(mis, Config{}))
 }
 
@@ -192,7 +192,7 @@ func TestStartIfNeeded_Running(t *testing.T) {
 
 func TestStartIfNeeded_Stopped(t *testing.T) {
 	mis := mockGetInstanceState(t, "Stopped", nil)
-	mockOperation(t, mis, nil)
+	mockUpdateInstanceState(t, mis, nil)
 	restore := patchConnect(mis, nil)
 	defer restore()
 	assert.Nil(t, startIfNeeded(Config{}))
