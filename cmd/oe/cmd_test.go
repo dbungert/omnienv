@@ -27,16 +27,16 @@ func TestCheckBad(t *testing.T) {
 	assert.Equal(t, 1, code)
 }
 
-var launchTest = []struct {
+var launchTests = []struct {
 	config Config
 
-	cmds [][]string
+	runCmds [][]string
 }{{
 	config: Config{
 		Label:  "l",
 		Series: "s",
 	},
-	cmds: [][]string{
+	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s"},
 		[]string{
 			"lxc", "exec", "l-s", "--",
@@ -49,7 +49,7 @@ var launchTest = []struct {
 		Series:         "s",
 		Virtualization: "vm",
 	},
-	cmds: [][]string{
+	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s", "--vm"},
 		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
 		[]string{
@@ -60,16 +60,59 @@ var launchTest = []struct {
 }}
 
 func TestLaunch(t *testing.T) {
-	var cmds [][]string
+	var runCmds [][]string
 	restore := Patch(&command, func(arg0 string, rest ...string) *exec.Cmd {
-		cmds = append(cmds, append([]string{arg0}, rest...))
-		return exec.Command("/bin/true")
+		runCmds = append(runCmds, append([]string{arg0}, rest...))
+		return exec.Command("true")
 	})
 	defer restore()
 
-	for _, test := range launchTest {
-		cmds = [][]string{}
+	for _, test := range launchTests {
+		runCmds = [][]string{}
 		launch(test.config)
-		assert.Equal(t, test.cmds, cmds)
+		assert.Equal(t, test.runCmds, runCmds)
+	}
+}
+
+var waitTests = []struct {
+	config   Config
+	mockCmds [][]string
+
+	runCmds [][]string
+}{{
+	config: Config{
+		Label:  "l",
+		Series: "s",
+	},
+	mockCmds: [][]string{},
+	runCmds:  [][]string{},
+}, {
+	config: Config{
+		Label:          "l",
+		Series:         "s",
+		Virtualization: "vm",
+	},
+	mockCmds: [][]string{
+		[]string{"sh", "-c", "exit 255"},
+		[]string{"true"},
+	},
+	runCmds: [][]string{
+		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
+		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
+	},
+}}
+
+func TestWait(t *testing.T) {
+	for _, test := range waitTests {
+		idx := -1
+		runCmds := [][]string{}
+		restore := Patch(&command, func(arg0 string, rest ...string) *exec.Cmd {
+			runCmds = append(runCmds, append([]string{arg0}, rest...))
+			idx += 1
+			return exec.Command(test.mockCmds[idx][0], test.mockCmds[idx][1:]...)
+		})
+		defer restore()
+		wait(test.config)
+		assert.Equal(t, test.runCmds, runCmds)
 	}
 }
