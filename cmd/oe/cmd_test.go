@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/dbungert/omnienv/mocks"
+	"github.com/stretchr/testify/mock"
 )
 
 func Patch[T any](target *T, mock T) func() {
@@ -122,30 +123,27 @@ func TestWait(t *testing.T) {
 	}
 }
 
-type mockInstanceServer struct {
-	op  lxd.Operation
-	err error
-}
-
-func (mis mockInstanceServer) UpdateInstanceState(name string, state api.InstanceStatePut, ETag string) (op lxd.Operation, err error) {
-	return mis.op, mis.err
+func TestStartFailedUIS(t *testing.T) {
+	mis := mocks.NewMockInstanceServer(t)
+	err := fmt.Errorf("failed start")
+	mis.On("UpdateInstanceState", "-", mock.Anything, "").Return(nil, err)
+	assert.NotNil(t, start(mis, Config{}))
 }
 
 func TestStart(t *testing.T) {
-	mockOp := mocks.NewMockOperation(t)
-	mockOp.On("Wait").Return(nil)
-	assert.Nil(t, start(mockInstanceServer{mockOp, nil}, Config{}))
-}
-
-func TestStartFailedUIS(t *testing.T) {
-	err := fmt.Errorf("failed start")
-	assert.NotNil(t, start(mockInstanceServer{nil, err}, Config{}))
+	mis := mocks.NewMockInstanceServer(t)
+	op := mocks.NewMockOperation(t)
+	mis.On("UpdateInstanceState", "-", mock.Anything, "").Return(op, nil)
+	op.On("Wait").Return(nil)
+	assert.Nil(t, start(mis, Config{}))
 }
 
 func TestStartFailedWait(t *testing.T) {
-	mockOp := mocks.NewMockOperation(t)
-	mockOp.On("Wait").Return(fmt.Errorf("disaster"))
-	assert.NotNil(t, start(mockInstanceServer{mockOp, nil}, Config{}))
+	mis := mocks.NewMockInstanceServer(t)
+	op := mocks.NewMockOperation(t)
+	mis.On("UpdateInstanceState", "-", mock.Anything, "").Return(op, nil)
+	op.On("Wait").Return(fmt.Errorf("disaster"))
+	assert.NotNil(t, start(mis, Config{}))
 }
 
 func TestStartIfNeeded(t *testing.T) {

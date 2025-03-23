@@ -18,16 +18,9 @@ var command = exec.Command
 var exit = os.Exit
 var connectLXDUnix = lxd.ConnectLXDUnix
 
-// InstanceStateUpdater facilitates testing.  Real usage will supply the object
-// returned from lxd.ConnectLXDUnix or similar.
-type InstanceStateUpdater interface {
-	UpdateInstanceState(name string, state api.InstanceStatePut, ETag string) (op lxd.Operation, err error)
-	// GetInstanceState(name string) (*api.InstanceState, string, error)
-}
-
-func start(isu InstanceStateUpdater, cfg Config) error {
+func start(c lxd.InstanceServer, cfg Config) error {
 	reqState := api.InstanceStatePut{Action: "start", Timeout: -1}
-	op, err := isu.UpdateInstanceState(cfg.Name(), reqState, "")
+	op, err := c.UpdateInstanceState(cfg.Name(), reqState, "")
 	if err != nil {
 		return err
 	}
