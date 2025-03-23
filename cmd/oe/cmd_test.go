@@ -39,6 +39,7 @@ var launchTests = []struct {
 	mockCmds [][]string
 
 	runCmds [][]string
+	errMsg  string
 }{{
 	config: Config{
 		Label:  "l",
@@ -52,6 +53,7 @@ var launchTests = []struct {
 			"cloud-init", "status", "--wait",
 		},
 	},
+	errMsg: "",
 }, {
 	config: Config{
 		Label:          "l",
@@ -67,6 +69,35 @@ var launchTests = []struct {
 			"cloud-init", "status", "--wait",
 		},
 	},
+	errMsg: "",
+}, {
+	config: Config{
+		Label:          "l",
+		Series:         "s",
+		Virtualization: "vm",
+	},
+	mockCmds: [][]string{
+		[]string{"false"},
+	},
+	runCmds: [][]string{
+		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s", "--vm"},
+	},
+	errMsg: "failed to create instance: exit status 1",
+}, {
+	config: Config{
+		Label:          "l",
+		Series:         "s",
+		Virtualization: "vm",
+	},
+	mockCmds: [][]string{
+		[]string{"true"},
+		[]string{"false"},
+	},
+	runCmds: [][]string{
+		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s", "--vm"},
+		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
+	},
+	errMsg: "failed to wait for instance: strange exit code 1",
 }}
 
 func TestLaunch(t *testing.T) {
@@ -79,8 +110,13 @@ func TestLaunch(t *testing.T) {
 			return exec.Command(test.mockCmds[idx][0], test.mockCmds[idx][1:]...)
 		})
 		defer restore()
-		launch(test.config)
+		err := launch(test.config)
 		assert.Equal(t, test.runCmds, runCmds)
+		if len(test.errMsg) > 0 {
+			assert.ErrorContains(t, err, test.errMsg)
+		} else {
+			assert.Nil(t, err)
+		}
 	}
 }
 

@@ -94,7 +94,7 @@ func wait(cfg Config) error {
 	}
 }
 
-func launch(cfg Config) {
+func launch(cfg Config) error {
 	image := "ubuntu-daily:" + cfg.Series
 	args := []string{"lxc", "launch", image, cfg.Name()}
 	if cfg.IsVM() {
@@ -113,14 +113,15 @@ devices:
     type: disk`))
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		SlogFatal("fatal error", "error", err)
+		return fmt.Errorf("failed to create instance: %w", err)
 	}
 
 	if err := wait(cfg); err != nil {
-		SlogFatal("failed to wait for instance", "error", err)
+		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
 	check("lxc", "exec", cfg.Name(), "--", "cloud-init", "status", "--wait")
+	return nil
 }
 
 func shell(cfg Config, opts Opts) {
@@ -235,7 +236,9 @@ func main() {
 	}
 
 	if opts.Launch {
-		launch(cfg)
+		if err := launch(cfg); err != nil {
+			SlogFatal("failed to launch", "error", err)
+		}
 	}
 
 	shell(cfg, opts)
