@@ -123,21 +123,38 @@ func TestWait(t *testing.T) {
 }
 
 type mockInstanceServer struct {
-	op lxd.Operation
+	op  lxd.Operation
+	err error
 }
 
 func (mis mockInstanceServer) UpdateInstanceState(name string, state api.InstanceStatePut, ETag string) (op lxd.Operation, err error) {
-	return mis.op, nil
+	return mis.op, mis.err
 }
 
 func TestStart(t *testing.T) {
 	mockOp := mocks.NewMockOperation(t)
 	mockOp.On("Wait").Return(nil)
-	assert.Nil(t, start(mockInstanceServer{mockOp}, Config{}))
+	assert.Nil(t, start(mockInstanceServer{mockOp, nil}, Config{}))
+}
+
+func TestStartFailedUIS(t *testing.T) {
+	err := fmt.Errorf("failed start")
+	assert.NotNil(t, start(mockInstanceServer{nil, err}, Config{}))
 }
 
 func TestStartFailedWait(t *testing.T) {
 	mockOp := mocks.NewMockOperation(t)
 	mockOp.On("Wait").Return(fmt.Errorf("disaster"))
-	assert.NotNil(t, start(mockInstanceServer{mockOp}, Config{}))
+	assert.NotNil(t, start(mockInstanceServer{mockOp, nil}, Config{}))
+}
+
+func TestStartIfNeeded(t *testing.T) {
+	mis := mocks.NewMockInstanceServer(t)
+	state := api.InstanceState{Status: "Running"}
+	mis.On("GetInstanceState", "-").Return(&state, "", nil)
+	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
+		return mis, nil
+	})
+	defer restore()
+	startIfNeeded(Config{})
 }

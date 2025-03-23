@@ -16,9 +16,13 @@ import (
 
 var command = exec.Command
 var exit = os.Exit
+var connectLXDUnix = lxd.ConnectLXDUnix
 
+// InstanceStateUpdater facilitates testing.  Real usage will supply the object
+// returned from lxd.ConnectLXDUnix or similar.
 type InstanceStateUpdater interface {
 	UpdateInstanceState(name string, state api.InstanceStatePut, ETag string) (op lxd.Operation, err error)
+	// GetInstanceState(name string) (*api.InstanceState, string, error)
 }
 
 func start(isu InstanceStateUpdater, cfg Config) error {
@@ -37,7 +41,7 @@ func start(isu InstanceStateUpdater, cfg Config) error {
 
 func startIfNeeded(cfg Config) {
 	// Connect to LXD over the Unix socket
-	c, err := lxd.ConnectLXDUnix("", nil)
+	c, err := connectLXDUnix("", nil)
 	if err != nil {
 		SlogFatal("fatal error", "error", err)
 	}
