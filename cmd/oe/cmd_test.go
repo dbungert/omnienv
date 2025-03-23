@@ -1,10 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"os/exec"
 	"testing"
 
+	lxd "github.com/canonical/lxd/client"
+	"github.com/canonical/lxd/shared/api"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/dbungert/omnienv/mocks"
 )
 
 func Patch[T any](target *T, mock T) func() {
@@ -115,4 +120,24 @@ func TestWait(t *testing.T) {
 		wait(test.config)
 		assert.Equal(t, test.runCmds, runCmds)
 	}
+}
+
+type mockInstanceServer struct {
+	op lxd.Operation
+}
+
+func (mis mockInstanceServer) UpdateInstanceState(name string, state api.InstanceStatePut, ETag string) (op lxd.Operation, err error) {
+	return mis.op, nil
+}
+
+func TestStart(t *testing.T) {
+	mockOp := mocks.NewMockOperation(t)
+	mockOp.On("Wait").Return(nil)
+	assert.Nil(t, start(mockInstanceServer{mockOp}, Config{}))
+}
+
+func TestStartFailedWait(t *testing.T) {
+	mockOp := mocks.NewMockOperation(t)
+	mockOp.On("Wait").Return(fmt.Errorf("disaster"))
+	assert.NotNil(t, start(mockInstanceServer{mockOp}, Config{}))
 }

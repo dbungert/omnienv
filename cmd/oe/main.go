@@ -17,9 +17,13 @@ import (
 var command = exec.Command
 var exit = os.Exit
 
-func start(c lxd.InstanceServer, cfg Config) error {
+type InstanceStateUpdater interface {
+	UpdateInstanceState(name string, state api.InstanceStatePut, ETag string) (op lxd.Operation, err error)
+}
+
+func start(isu InstanceStateUpdater, cfg Config) error {
 	reqState := api.InstanceStatePut{Action: "start", Timeout: -1}
-	op, err := c.UpdateInstanceState(cfg.Name(), reqState, "")
+	op, err := isu.UpdateInstanceState(cfg.Name(), reqState, "")
 	if err != nil {
 		return err
 	}
