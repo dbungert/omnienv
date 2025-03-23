@@ -32,29 +32,28 @@ func start(c lxd.InstanceServer, cfg Config) error {
 	return nil
 }
 
-func startIfNeeded(cfg Config) {
+func startIfNeeded(cfg Config) error {
 	// Connect to LXD over the Unix socket
 	c, err := connectLXDUnix("", nil)
 	if err != nil {
-		SlogFatal("fatal error", "error", err)
+		return err
 	}
 
 	// middle arg is the etag
 	state, _, err := c.GetInstanceState(cfg.Name())
 	if err != nil {
-		SlogFatal("fatal error", "error", err)
+		return err
 	}
 
 	slog.Debug("startIfNeeded", "instanceStatus", state.Status)
 	switch state.Status {
 	case "Stopped":
-		if err = start(c, cfg); err != nil {
-			SlogFatal("fatal error", "error", err)
-		}
+		return start(c, cfg)
 	case "Running":
 		// no action required
+		return nil
 	default:
-		SlogFatal("Unknown handling", "instanceStatus", state.Status)
+		return fmt.Errorf("no handler for Status %v", state.Status)
 	}
 }
 
@@ -127,7 +126,9 @@ devices:
 }
 
 func shell(cfg Config, opts Opts) {
-	startIfNeeded(cfg)
+	if err := startIfNeeded(cfg); err != nil {
+		SlogFatal("failed to start instance", "error", err)
+	}
 
 	wait(cfg)
 

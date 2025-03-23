@@ -154,7 +154,7 @@ func TestStartIfNeeded_Running(t *testing.T) {
 		return mis, nil
 	})
 	defer restore()
-	startIfNeeded(Config{})
+	assert.Nil(t, startIfNeeded(Config{}))
 }
 
 func TestStartIfNeeded_Stopped(t *testing.T) {
@@ -168,5 +168,5 @@ func TestStartIfNeeded_Stopped(t *testing.T) {
 		return mis, nil
 	})
 	defer restore()
-	startIfNeeded(Config{})
+	assert.Nil(t, startIfNeeded(Config{}))
 }
