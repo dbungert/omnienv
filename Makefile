@@ -19,3 +19,7 @@ gocovsh:
 	go test -v ./... -coverpkg=./... -coverprofile=.cover.out
 	gocovsh --profile .cover.out
 	rm .cover.out
+
+mocks:
+	mockery --all
+.PHONY: mocks
