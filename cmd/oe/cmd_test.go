@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"testing"
@@ -148,10 +149,15 @@ func TestStartFailedWait(t *testing.T) {
 	assert.NotNil(t, start(mis, Config{}))
 }
 
-func TestStartIfNeeded_ConnectFail(t *testing.T) {
+func patchConnect(is lxd.InstanceServer, err error) func() {
 	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
-		return nil, fmt.Errorf("oh no")
+		return is, err
 	})
+	return restore
+}
+
+func TestStartIfNeeded_ConnectFail(t *testing.T) {
+	restore := patchConnect(nil, errors.New("error"))
 	defer restore()
 	assert.NotNil(t, startIfNeeded(Config{}))
 }
@@ -165,27 +171,21 @@ func mockGetInstanceState(t *testing.T, status string, err error) *mocks.MockIns
 
 func TestStartIfNeeded_GISFail(t *testing.T) {
 	mis := mockGetInstanceState(t, "", fmt.Errorf("error"))
-	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
-		return mis, nil
-	})
+	restore := patchConnect(mis, nil)
 	defer restore()
 	assert.NotNil(t, startIfNeeded(Config{}))
 }
 
 func TestStartIfNeeded_UnknownState(t *testing.T) {
 	mis := mockGetInstanceState(t, "NotAState", nil)
-	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
-		return mis, nil
-	})
+	restore := patchConnect(mis, nil)
 	defer restore()
 	assert.NotNil(t, startIfNeeded(Config{}))
 }
 
 func TestStartIfNeeded_Running(t *testing.T) {
 	mis := mockGetInstanceState(t, "Running", nil)
-	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
-		return mis, nil
-	})
+	restore := patchConnect(mis, nil)
 	defer restore()
 	assert.Nil(t, startIfNeeded(Config{}))
 }
@@ -193,9 +193,7 @@ func TestStartIfNeeded_Running(t *testing.T) {
 func TestStartIfNeeded_Stopped(t *testing.T) {
 	mis := mockGetInstanceState(t, "Stopped", nil)
 	mockOperation(t, mis, nil)
-	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
-		return mis, nil
-	})
+	restore := patchConnect(mis, nil)
 	defer restore()
 	assert.Nil(t, startIfNeeded(Config{}))
 }
