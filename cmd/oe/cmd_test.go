@@ -154,6 +154,28 @@ func TestStartIfNeeded_ConnectFail(t *testing.T) {
 	assert.NotNil(t, startIfNeeded(Config{}))
 }
 
+func TestStartIfNeeded_GISFail(t *testing.T) {
+	mis := mocks.NewMockInstanceServer(t)
+	state := api.InstanceState{}
+	mis.On("GetInstanceState", "-").Return(&state, "", fmt.Errorf("oh no"))
+	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
+		return mis, nil
+	})
+	defer restore()
+	assert.NotNil(t, startIfNeeded(Config{}))
+}
+
+func TestStartIfNeeded_UnknownState(t *testing.T) {
+	mis := mocks.NewMockInstanceServer(t)
+	state := api.InstanceState{Status: "NotAState"}
+	mis.On("GetInstanceState", "-").Return(&state, "", nil)
+	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
+		return mis, nil
+	})
+	defer restore()
+	assert.NotNil(t, startIfNeeded(Config{}))
+}
+
 func TestStartIfNeeded_Running(t *testing.T) {
 	mis := mocks.NewMockInstanceServer(t)
 	state := api.InstanceState{Status: "Running"}
