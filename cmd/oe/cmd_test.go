@@ -86,6 +86,7 @@ var waitTests = []struct {
 	mockCmds [][]string
 
 	runCmds [][]string
+	err     error
 }{{
 	config: Config{
 		Label:  "l",
@@ -93,6 +94,7 @@ var waitTests = []struct {
 	},
 	mockCmds: [][]string{},
 	runCmds:  [][]string{},
+	err:      nil,
 }, {
 	config: Config{
 		Label:          "l",
@@ -107,6 +109,20 @@ var waitTests = []struct {
 		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
 		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
 	},
+	err: nil,
+}, {
+	config: Config{
+		Label:          "l",
+		Series:         "s",
+		Virtualization: "vm",
+	},
+	mockCmds: [][]string{
+		[]string{"sh", "-c", "exit 1"},
+	},
+	runCmds: [][]string{
+		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
+	},
+	err: errors.New("strange exit code 1"),
 }}
 
 func TestWait(t *testing.T) {
@@ -119,8 +135,9 @@ func TestWait(t *testing.T) {
 			return exec.Command(test.mockCmds[idx][0], test.mockCmds[idx][1:]...)
 		})
 		defer restore()
-		wait(test.config)
+		err := wait(test.config)
 		assert.Equal(t, test.runCmds, runCmds)
+		assert.Equal(t, test.err, err)
 	}
 }
 

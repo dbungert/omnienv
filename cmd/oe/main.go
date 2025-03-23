@@ -68,26 +68,26 @@ func check(args ...string) {
 	}
 }
 
-func wait(cfg Config) {
+func wait(cfg Config) error {
 	if !cfg.IsVM() {
-		return
+		return nil
 	}
 	for {
 		err := run("lxc", "exec", cfg.Name(), "--", "/bin/true")
 		if err == nil {
 			slog.Debug("run check true: no err")
-			break
+			return nil
 		}
 
 		exitError, ok := err.(*exec.ExitError)
 		if !ok {
-			SlogFatal("unexpected error", "error", err)
+			return err
 		}
 
 		ec := exitError.ExitCode()
 		slog.Debug("run check true", "ec", ec)
 		if ec != 255 {
-			break
+			return fmt.Errorf("strange exit code %d", ec)
 		} else {
 			time.Sleep(time.Second)
 		}
@@ -116,7 +116,9 @@ devices:
 		SlogFatal("fatal error", "error", err)
 	}
 
-	wait(cfg)
+	if err := wait(cfg); err != nil {
+		SlogFatal("failed to wait for instance", "error", err)
+	}
 
 	check("lxc", "exec", cfg.Name(), "--", "cloud-init", "status", "--wait")
 }
@@ -126,7 +128,9 @@ func shell(cfg Config, opts Opts) {
 		SlogFatal("failed to start instance", "error", err)
 	}
 
-	wait(cfg)
+	if err := wait(cfg); err != nil {
+		SlogFatal("failed to wait for instance", "error", err)
+	}
 
 	lxc, err := exec.LookPath("lxc")
 	if err != nil {
