@@ -146,6 +146,14 @@ func TestStartFailedWait(t *testing.T) {
 	assert.NotNil(t, start(mis, Config{}))
 }
 
+func TestStartIfNeeded_ConnectFail(t *testing.T) {
+	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
+		return nil, fmt.Errorf("oh no")
+	})
+	defer restore()
+	assert.NotNil(t, startIfNeeded(Config{}))
+}
+
 func TestStartIfNeeded_Running(t *testing.T) {
 	mis := mocks.NewMockInstanceServer(t)
 	state := api.InstanceState{Status: "Running"}
