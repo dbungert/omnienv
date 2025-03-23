@@ -154,10 +154,15 @@ func TestStartIfNeeded_ConnectFail(t *testing.T) {
 	assert.NotNil(t, startIfNeeded(Config{}))
 }
 
-func TestStartIfNeeded_GISFail(t *testing.T) {
+func mockGetInstanceState(t *testing.T, status string, err error) *mocks.MockInstanceServer {
 	mis := mocks.NewMockInstanceServer(t)
-	state := api.InstanceState{}
-	mis.On("GetInstanceState", "-").Return(&state, "", fmt.Errorf("oh no"))
+	state := api.InstanceState{Status: status}
+	mis.On("GetInstanceState", "-").Return(&state, "", err)
+	return mis
+}
+
+func TestStartIfNeeded_GISFail(t *testing.T) {
+	mis := mockGetInstanceState(t, "", fmt.Errorf("error"))
 	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
 		return mis, nil
 	})
@@ -166,9 +171,7 @@ func TestStartIfNeeded_GISFail(t *testing.T) {
 }
 
 func TestStartIfNeeded_UnknownState(t *testing.T) {
-	mis := mocks.NewMockInstanceServer(t)
-	state := api.InstanceState{Status: "NotAState"}
-	mis.On("GetInstanceState", "-").Return(&state, "", nil)
+	mis := mockGetInstanceState(t, "NotAState", nil)
 	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
 		return mis, nil
 	})
@@ -177,9 +180,7 @@ func TestStartIfNeeded_UnknownState(t *testing.T) {
 }
 
 func TestStartIfNeeded_Running(t *testing.T) {
-	mis := mocks.NewMockInstanceServer(t)
-	state := api.InstanceState{Status: "Running"}
-	mis.On("GetInstanceState", "-").Return(&state, "", nil)
+	mis := mockGetInstanceState(t, "Running", nil)
 	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
 		return mis, nil
 	})
@@ -188,9 +189,7 @@ func TestStartIfNeeded_Running(t *testing.T) {
 }
 
 func TestStartIfNeeded_Stopped(t *testing.T) {
-	mis := mocks.NewMockInstanceServer(t)
-	state := api.InstanceState{Status: "Stopped"}
-	mis.On("GetInstanceState", "-").Return(&state, "", nil)
+	mis := mockGetInstanceState(t, "Stopped", nil)
 	op := mocks.NewMockOperation(t)
 	mis.On("UpdateInstanceState", "-", mock.Anything, "").Return(op, nil)
 	op.On("Wait").Return(nil)
