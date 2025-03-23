@@ -14,10 +14,6 @@ import (
 	"github.com/canonical/lxd/shared/api"
 )
 
-var command = exec.Command
-var exit = os.Exit
-var connectLXDUnix = lxd.ConnectLXDUnix
-
 func start(c lxd.InstanceServer, cfg Config) error {
 	reqState := api.InstanceStatePut{Action: "start", Timeout: -1}
 	op, err := c.UpdateInstanceState(cfg.Name(), reqState, "")
