@@ -61,6 +61,7 @@ var loadCfgTests = []struct {
 	seriesEnv string
 
 	config Config
+	warn   string
 }{{
 	summary: "series",
 	data:    "series: plucky",
@@ -98,6 +99,15 @@ virtualization: vm
 		Backend:        "lxd",
 		Virtualization: "vm",
 	},
+}, {
+	summary: "project",
+	data:    "project: proj",
+	config: Config{
+		Project:        "proj",
+		Series:         "zesty",
+		Virtualization: "container",
+	},
+	warn: `msg="legacy key"`,
 }}
 
 func TestLoadCfg(t *testing.T) {
@@ -106,9 +116,13 @@ func TestLoadCfg(t *testing.T) {
 	assert.Nil(t, os.Mkdir(dirname, 0750))
 	filename := dirname + "/" + cfgName
 
+	restore, buf := patchLogger()
+	defer restore()
+	setupLogging(Opts{})
 	os.Setenv("DEFAULT_SERIES", "zesty")
 
 	for _, test := range loadCfgTests {
+		buf.Reset()
 		err := os.WriteFile(filename, []byte(test.data), 0644)
 		assert.Nil(t, err, test.summary)
 		actual, err := loadConfig(filename)
@@ -120,6 +134,9 @@ func TestLoadCfg(t *testing.T) {
 			test.config.Label = "foo"
 		}
 		assert.Equal(t, test.config, actual, test.summary)
+		if len(test.warn) > 0 {
+			assert.Contains(t, buf.String(), test.warn, test.summary)
+		}
 	}
 }
 

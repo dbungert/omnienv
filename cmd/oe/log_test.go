@@ -21,10 +21,14 @@ var logTests = []struct {
 	verbose: true,
 }}
 
-func TestSetupLogging(t *testing.T) {
+func patchLogger() (func(), *bytes.Buffer) {
 	buf := &bytes.Buffer{}
 	var mockStderr io.Writer = buf
-	restore := Patch(&stderr, mockStderr)
+	return Patch(&stderr, mockStderr), buf
+}
+
+func TestSetupLogging(t *testing.T) {
+	restore, buf := patchLogger()
 	defer restore()
 
 	for _, test := range logTests {
