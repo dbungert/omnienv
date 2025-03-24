@@ -74,7 +74,6 @@ func wait(cfg Config) error {
 	for {
 		err := run("lxc", "exec", cfg.Name(), "--", "/bin/true")
 		if err == nil {
-			slog.Debug("run check true: no err")
 			return nil
 		}
 
@@ -83,9 +82,7 @@ func wait(cfg Config) error {
 			return err
 		}
 
-		ec := exitError.ExitCode()
-		slog.Debug("run check true", "ec", ec)
-		if ec != 255 {
+		if ec := exitError.ExitCode(); ec != 255 {
 			return fmt.Errorf("strange exit code %d", ec)
 		} else {
 			time.Sleep(time.Second)
