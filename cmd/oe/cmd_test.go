@@ -304,5 +304,5 @@ func TestShell(t *testing.T) {
 		return nil
 	})
 	defer restoreSE()
-	shell(Config{}, Opts{})
+	assert.Nil(t, shell(Config{}, Opts{}))
 }

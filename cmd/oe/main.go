@@ -151,7 +151,7 @@ func lxcExec(cfg Config, script string) error {
 	return syscallExec(args[0], args, envv)
 }
 
-func shell(cfg Config, opts Opts) {
+func shell(cfg Config, opts Opts) error {
 	if err := startIfNeeded(cfg); err != nil {
 		SlogFatal("failed to start instance", "error", err)
 	}
@@ -175,6 +175,7 @@ func shell(cfg Config, opts Opts) {
 	if err != nil {
 		SlogFatal("failed to lxc exec")
 	}
+	return nil
 }
 
 func main() {
@@ -197,5 +198,7 @@ func main() {
 		}
 	}
 
-	shell(cfg, opts)
+	if err := shell(cfg, opts); err != nil {
+		SlogFatal("failed to create shell", "error", err)
+	}
 }
