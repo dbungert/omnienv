@@ -281,13 +281,59 @@ func TestLxcExecFailedLookup(t *testing.T) {
 	assert.Equal(t, err, lxcExec(Config{}, ""))
 }
 
+var shellTests = []struct {
+	opts   Opts
+	script string
+}{{
+	opts:   Opts{},
+	script: `cd "/tmp" && exec $SHELL`,
+}, {
+	opts:   Opts{Params: []string{"a", "b"}},
+	script: `cd "/tmp" && exec $SHELL -c "b"`,
+}}
+
 func TestShell(t *testing.T) {
 	mis := mockGetInstanceState(t, "Running", nil)
 	restore := patchConnect(mis, nil)
 	defer restore()
 
-	restoreEnv := patchEnv("PWD", "/tmp")
-	defer restoreEnv()
+	restorePWD := patchEnv("PWD", "/tmp")
+	defer restorePWD()
+
+	restoreUser := patchEnv("USER", "user")
+	defer restoreUser()
+
+	restoreLP := Patch(&lookPath, func(file string) (string, error) {
+		return "lxc", nil
+	})
+	defer restoreLP()
+
+	for _, test := range shellTests {
+		restoreSE := Patch(&syscallExec, func(argv0 string, argv []string, envv []string) (err error) {
+			assert.Equal(t, argv0, "lxc")
+			assert.Equal(t, argv, []string{
+				"lxc", "exec", "-", "--",
+				"su", "-P", "-", "user", "-c",
+				test.script,
+			})
+			return nil
+		})
+		defer restoreSE()
+		assert.Nil(t, shell(Config{}, test.opts))
+	}
+}
+
+func TestShell_StartFail(t *testing.T) {
+	mis := mockGetInstanceState(t, "", fmt.Errorf("error"))
+	restore := patchConnect(mis, nil)
+	defer restore()
+	assert.NotNil(t, shell(Config{}, Opts{}))
+}
+
+func TestShell_LXCFail(t *testing.T) {
+	mis := mockGetInstanceState(t, "Running", nil)
+	restore := patchConnect(mis, nil)
+	defer restore()
 
 	restoreLP := Patch(&lookPath, func(file string) (string, error) {
 		return "lxc", nil
@@ -295,14 +341,8 @@ func TestShell(t *testing.T) {
 	defer restoreLP()
 
 	restoreSE := Patch(&syscallExec, func(argv0 string, argv []string, envv []string) (err error) {
-		assert.Equal(t, argv0, "lxc")
-		assert.Equal(t, argv, []string{
-			"lxc", "exec", "-", "--",
-			"su", "-P", "-", "dbungert", "-c",
-			`cd "/tmp" && exec $SHELL`,
-		})
-		return nil
+		return errors.New("error")
 	})
 	defer restoreSE()
-	assert.Nil(t, shell(Config{}, Opts{}))
+	assert.NotNil(t, shell(Config{}, Opts{}))
 }

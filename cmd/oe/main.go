@@ -153,16 +153,15 @@ func lxcExec(cfg Config, script string) error {
 
 func shell(cfg Config, opts Opts) error {
 	if err := startIfNeeded(cfg); err != nil {
-		SlogFatal("failed to start instance", "error", err)
+		return fmt.Errorf("failed to start instance: %w", err)
 	}
 
 	if err := wait(cfg); err != nil {
-		SlogFatal("failed to wait for instance", "error", err)
+		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
 	// in instance, change to the directory we are in right now
 	script := fmt.Sprintf(`cd "%s" && exec $SHELL`, os.Getenv("PWD"))
-
 	if len(opts.Params) > 1 {
 		// run shell with the command we were given
 		script = fmt.Sprintf(
@@ -171,9 +170,8 @@ func shell(cfg Config, opts Opts) error {
 		)
 	}
 
-	err := lxcExec(cfg, script)
-	if err != nil {
-		SlogFatal("failed to lxc exec")
+	if err := lxcExec(cfg, script); err != nil {
+		return fmt.Errorf("failed to lxc exec: %w", err)
 	}
 	return nil
 }
