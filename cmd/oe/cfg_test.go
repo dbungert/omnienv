@@ -55,6 +55,18 @@ func TestFindParentCfg(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func patchEnv(key string, mock string) func() {
+	original, ok := os.LookupEnv(key)
+	_ = os.Setenv(key, mock)
+	return func() {
+		if ok {
+			_ = os.Setenv(key, original)
+		} else {
+			os.Unsetenv(key)
+		}
+	}
+}
+
 var loadCfgTests = []struct {
 	summary   string
 	data      string
@@ -119,7 +131,9 @@ func TestLoadCfg(t *testing.T) {
 	restore, buf := patchLogger()
 	defer restore()
 	setupLogging(Opts{})
-	os.Setenv("DEFAULT_SERIES", "zesty")
+
+	restoreEnv := patchEnv("DEFAULT_SERIES", "zesty")
+	defer restoreEnv()
 
 	for _, test := range loadCfgTests {
 		buf.Reset()

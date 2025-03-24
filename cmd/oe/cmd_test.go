@@ -280,3 +280,29 @@ func TestLxcExecFailedLookup(t *testing.T) {
 	defer restoreLP()
 	assert.Equal(t, err, lxcExec(Config{}, ""))
 }
+
+func TestShell(t *testing.T) {
+	mis := mockGetInstanceState(t, "Running", nil)
+	restore := patchConnect(mis, nil)
+	defer restore()
+
+	restoreEnv := patchEnv("PWD", "/tmp")
+	defer restoreEnv()
+
+	restoreLP := Patch(&lookPath, func(file string) (string, error) {
+		return "lxc", nil
+	})
+	defer restoreLP()
+
+	restoreSE := Patch(&syscallExec, func(argv0 string, argv []string, envv []string) (err error) {
+		assert.Equal(t, argv0, "lxc")
+		assert.Equal(t, argv, []string{
+			"lxc", "exec", "-", "--",
+			"su", "-P", "-", "dbungert", "-c",
+			`cd "/tmp" && exec $SHELL`,
+		})
+		return nil
+	})
+	defer restoreSE()
+	shell(Config{}, Opts{})
+}
