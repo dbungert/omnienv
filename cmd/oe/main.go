@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
-	"syscall"
 	"time"
 
 	"al.essio.dev/pkg/shellescape"
@@ -124,6 +123,34 @@ devices:
 	return nil
 }
 
+func lxcExec(cfg Config, script string) error {
+	lxc, err := lookPath("lxc")
+	if err != nil {
+		return err
+	}
+
+	args := []string{
+		// get a shell to the instance via lxc
+		lxc, "exec", cfg.Name(), "--",
+
+		// login as $USER, get a pty, run script
+		"su", "-P", "-", os.Getenv("USER"), "-c", script,
+
+		// su -P only works sometimes
+		//   22.04: jammy+ is fine
+		//   20.04: focal fails the user ownership of /dev/pts/2
+		//   18.04: bionic su has no "-P", at least not build-time
+		//          enabled, and might have the same focal problems if
+		//          we rebuilt
+		//
+		// should I run something like
+		//   https://github.com/creack/pty on the other side?
+	}
+	slog.Debug("exec", "command", args)
+	envv := os.Environ()
+	return syscallExec(args[0], args, envv)
+}
+
 func shell(cfg Config, opts Opts) {
 	if err := startIfNeeded(cfg); err != nil {
 		SlogFatal("failed to start instance", "error", err)
@@ -131,11 +158,6 @@ func shell(cfg Config, opts Opts) {
 
 	if err := wait(cfg); err != nil {
 		SlogFatal("failed to wait for instance", "error", err)
-	}
-
-	lxc, err := exec.LookPath("lxc")
-	if err != nil {
-		SlogFatal("cannot find lxc")
 	}
 
 	// in instance, change to the directory we are in right now
@@ -149,75 +171,9 @@ func shell(cfg Config, opts Opts) {
 		)
 	}
 
-	args := []string{
-		// get a shell to the instance via lxc
-		lxc, "exec", cfg.Name(),
-
-		// login as $USER, get a pty, run above script
-		"--", "su", "-P", "-", os.Getenv("USER"), "-c", script,
-
-		// su -P only works sometimes
-		//   22.04: jammy+ is fine
-		//   20.04: focal fails the user ownership of /dev/pts/2
-		//   18.04: bionic su has no "-P", at least not build-time
-		//          enabled, and might have the same focal problems if
-		//          we rebuilt
-		//
-		// python3 -c 'import pty;pty.spawn("/bin/bash")'
-		//   is enough to make bionic pass current tests, but is
-		//   fixed to 80 columns
-		//
-		// should I run something like
-		//   https://github.com/creack/pty on the other side?
-
-		// ------------ these are bad plans, don't do these -----------
-
-		// lxc, "shell", cfg.Name(),
-		//   this runs things as root in the container, we want to run
-		//   as user.  Also, this is a built-in alias for
-		//   "exec @ARGS@ -- su -l",
-
-		// lxc, "shell", "--user", "1000", cfg.Name(),
-		//   prompts for user credentials
-
-		// lxc, "exec", cfg.Name(),
-		// "--", "su", "-", os.Getenv("USER"),
-		//   This leaves us with no pty, which means that things that
-		//   need it (including the version of subiquity tests that
-		//   pass in github) don't work
-		//   Manually adding a pty to this does work.
-
-		// lxc, "exec", cfg.Name(),
-		// "--", "su", "-p", "-", os.Getenv("USER"),
-		//   not even valid
-
-		// lxc, "exec", cfg.Name(),
-		// "-t", "--user", "1000", "--", "bash",
-		//   busted environment
-
-		// lxc, "exec", cfg.Name(),
-		// "-t", "--user", "1000", "--", "bash", "-l",
-		//   still a busted environment
-
-		// lxc, "exec", cfg.Name(),
-		// "--env", "HOME=/home/dbungert",
-		// "-t", "--user", "1000", "--", "bash", "-l",
-		//   kind of works?  manually setting HOME is ugly.  something
-		//   still broken in environment based on how PS1 prompt is
-		//   behaving.  Surely still needs pty.
-
-		// lxc, "exec", cfg.Name(),
-		// "-t", "--", "su", "-", os.Getenv("USER"),
-		//   I'm not sure what -t does but not passing the pty test
-
-		// lxc, "exec", cfg.Name(),
-		// "--cwd", "foo",
-		//   might help some cases but su -l ignores this
-	}
-	slog.Debug("exec", "command", args)
-	envv := os.Environ()
-	if err := syscall.Exec(args[0], args, envv); err != nil {
-		SlogFatal("unexpected return from exec", "err", err)
+	err := lxcExec(cfg, script)
+	if err != nil {
+		SlogFatal("failed to lxc exec")
 	}
 }
 

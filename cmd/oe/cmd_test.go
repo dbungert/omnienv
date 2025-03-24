@@ -253,3 +253,30 @@ func TestStartIfNeeded_Stopped(t *testing.T) {
 	defer restore()
 	assert.Nil(t, startIfNeeded(Config{}))
 }
+
+func TestLxcExec(t *testing.T) {
+	restoreLP := Patch(&lookPath, func(file string) (string, error) {
+		return "/foo/lxc", nil
+	})
+	defer restoreLP()
+
+	restoreSE := Patch(&syscallExec, func(argv0 string, argv []string, envv []string) (err error) {
+		assert.Equal(t, argv0, "/foo/lxc")
+		assert.Equal(t, argv, []string{
+			"/foo/lxc", "exec", "-", "--",
+			"su", "-P", "-", "dbungert", "-c", "bar",
+		})
+		return nil
+	})
+	defer restoreSE()
+	assert.Nil(t, lxcExec(Config{}, "bar"))
+}
+
+func TestLxcExecFailedLookup(t *testing.T) {
+	err := errors.New("error")
+	restoreLP := Patch(&lookPath, func(file string) (string, error) {
+		return "", err
+	})
+	defer restoreLP()
+	assert.Equal(t, err, lxcExec(Config{}, ""))
+}
