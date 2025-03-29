@@ -169,7 +169,7 @@ func TestStartFailedUIS(t *testing.T) {
 	mis := mocks.NewMockInstanceServer(t)
 	err := fmt.Errorf("failed start")
 	mis.On("UpdateInstanceState", "-", mock.Anything, "").Return(nil, err)
-	assert.NotNil(t, start(mis, Config{}))
+	assert.NotNil(t, App{}.start(mis))
 }
 
 func mockUpdateInstanceState(t *testing.T, mis *mocks.MockInstanceServer, err error) {
@@ -181,13 +181,13 @@ func mockUpdateInstanceState(t *testing.T, mis *mocks.MockInstanceServer, err er
 func TestStart(t *testing.T) {
 	mis := mocks.NewMockInstanceServer(t)
 	mockUpdateInstanceState(t, mis, nil)
-	assert.Nil(t, start(mis, Config{}))
+	assert.Nil(t, App{}.start(mis))
 }
 
 func TestStartFailedWait(t *testing.T) {
 	mis := mocks.NewMockInstanceServer(t)
 	mockUpdateInstanceState(t, mis, fmt.Errorf("error"))
-	assert.NotNil(t, start(mis, Config{}))
+	assert.NotNil(t, App{}.start(mis))
 }
 
 func patchConnect(is lxd.InstanceServer, err error) func() {

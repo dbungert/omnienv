@@ -18,9 +18,9 @@ type App struct {
 	Opts
 }
 
-func start(c lxd.InstanceServer, cfg Config) error {
+func (app App) start(c lxd.InstanceServer) error {
 	reqState := api.InstanceStatePut{Action: "start", Timeout: -1}
-	op, err := c.UpdateInstanceState(cfg.Name(), reqState, "")
+	op, err := c.UpdateInstanceState(app.Config.Name(), reqState, "")
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func (app App) startIfNeeded() error {
 	slog.Debug("startIfNeeded", "instanceStatus", state.Status)
 	switch state.Status {
 	case "Stopped":
-		return start(c, app.Config)
+		return app.start(c)
 	case "Running":
 		// no action required
 		return nil
