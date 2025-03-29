@@ -42,6 +42,20 @@ var launchTests = []struct {
 	errMsg: "",
 }, {
 	config: Config{
+		Label:  "l",
+		Series: "s",
+	},
+	mockCmds: [][]string{[]string{"true"}, []string{"false"}},
+	runCmds: [][]string{
+		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s"},
+		[]string{
+			"lxc", "exec", "l-s", "--",
+			"cloud-init", "status", "--wait",
+		},
+	},
+	errMsg: "cloud-init failure: exit status 1",
+}, {
+	config: Config{
 		Label:          "l",
 		Series:         "s",
 		Virtualization: "vm",
