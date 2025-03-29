@@ -225,6 +225,7 @@ func mockGetInstance(t *testing.T, instanceType string, err error) *mocks.MockIn
 	mis := mocks.NewMockInstanceServer(t)
 	instance := api.Instance{Type: instanceType}
 	mis.On("GetInstance", "l-s").Return(&instance, "", err)
+	mis.On("Disconnect").Return()
 	return mis
 }
 
@@ -232,6 +233,7 @@ func mockGetInstanceState(t *testing.T, status string, err error) *mocks.MockIns
 	mis := mocks.NewMockInstanceServer(t)
 	state := api.InstanceState{Status: status}
 	mis.On("GetInstanceState", "l-s").Return(&state, "", err)
+	mis.On("Disconnect").Return()
 	return mis
 }
 

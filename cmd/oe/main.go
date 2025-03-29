@@ -47,6 +47,7 @@ func (app App) startIfNeeded() error {
 	if err != nil {
 		return err
 	}
+	defer c.Disconnect()
 
 	// middle arg is the etag
 	state, _, err := c.GetInstanceState(app.Config.Name())
@@ -72,6 +73,7 @@ func (app App) isVM() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	defer c.Disconnect()
 
 	// middle arg is the etag
 	inst, _, err := c.GetInstance(app.Config.Name())
