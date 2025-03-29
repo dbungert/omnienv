@@ -125,7 +125,7 @@ devices:
 	return nil
 }
 
-func lxcExec(cfg Config, script string) error {
+func (app App) lxcExec(script string) error {
 	lxc, err := lookPath("lxc")
 	if err != nil {
 		return err
@@ -133,7 +133,7 @@ func lxcExec(cfg Config, script string) error {
 
 	args := []string{
 		// get a shell to the instance via lxc
-		lxc, "exec", cfg.Name(), "--",
+		lxc, "exec", app.Config.Name(), "--",
 
 		// login as $USER, get a pty, run script
 		"su", "-P", "-", os.Getenv("USER"), "-c", script,
@@ -172,7 +172,7 @@ func (app App) shell() error {
 		)
 	}
 
-	if err := lxcExec(app.Config, script); err != nil {
+	if err := app.lxcExec(script); err != nil {
 		return fmt.Errorf("failed to lxc exec: %w", err)
 	}
 	return nil

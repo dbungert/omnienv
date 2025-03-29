@@ -255,7 +255,7 @@ func TestLxcExec(t *testing.T) {
 		return nil
 	})
 	defer restoreSE()
-	assert.Nil(t, lxcExec(Config{}, "bar"))
+	assert.Nil(t, App{}.lxcExec("bar"))
 }
 
 func TestLxcExecFailedLookup(t *testing.T) {
@@ -264,7 +264,7 @@ func TestLxcExecFailedLookup(t *testing.T) {
 		return "", err
 	})
 	defer restoreLP()
-	assert.Equal(t, err, lxcExec(Config{}, ""))
+	assert.Equal(t, err, App{}.lxcExec(""))
 }
 
 var shellTests = []struct {
