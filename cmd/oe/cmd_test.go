@@ -20,20 +20,6 @@ func Patch[T any](target *T, mock T) func() {
 	return func() { *target = original }
 }
 
-func TestCheck(t *testing.T) {
-	check("/bin/true")
-}
-
-func TestCheckBad(t *testing.T) {
-	var code int
-	restore := Patch(&exit, func(_code int) {
-		code = _code
-	})
-	defer restore()
-	check("/bin/false")
-	assert.Equal(t, 1, code)
-}
-
 var launchTests = []struct {
 	config   Config
 	mockCmds [][]string

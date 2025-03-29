@@ -61,12 +61,6 @@ func run(args ...string) error {
 	return cmd.Run()
 }
 
-func check(args ...string) {
-	if err := run(args...); err != nil {
-		SlogFatal("fatal error", "error", err)
-	}
-}
-
 func wait(cfg Config) error {
 	if !cfg.IsVM() {
 		return nil
