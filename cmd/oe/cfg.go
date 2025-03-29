@@ -16,13 +16,17 @@ var errCfgNotFound = errors.New("Config not found")
 
 type Config struct {
 	// System indicates what distribution and version to base this upon.
+	// Specifying distribution not yet implemented.
+	// When distribution is omitted, Ubuntu is used.
 	System string
-	// RootDir is the parent directory of the .omnienv.yaml file.
-	RootDir string
 	// Label is set to the basename of RootDir by default, or may be
 	// overwritten with the supplied value.  Used as part of the name of
 	// the instance, along with System.
 	Label string
+	// RootDir is the writable base directory that the container has access
+	// to.  This field is optional, and if unsupplied uses the parent
+	// directory of the omnienv.yaml config.
+	RootDir string
 	// Backend indicates upon what we are running the instance.
 	// Only "lxd" is implemented.
 	Backend string
