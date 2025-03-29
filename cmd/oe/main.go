@@ -122,13 +122,7 @@ func (app App) launch() error {
 	cmd := command(args[0], args[1:]...)
 	slog.Debug("run", "command", args)
 	cmd.Stdout = os.Stdout
-	cmd.Stdin = bytes.NewReader([]byte(`
-devices:
-  home:
-    path: /home
-    shift: "true"
-    source: /home
-    type: disk`))
+	cmd.Stdin = bytes.NewReader([]byte(app.Config.LXDLaunchConfig()))
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to create instance: %w", err)

@@ -42,6 +42,17 @@ func (cfg Config) IsVM() bool {
 	return cfg.Virtualization == "vm"
 }
 
+func (cfg Config) LXDLaunchConfig() string {
+	return `
+devices:
+  home:
+    type: disk
+    shift: true
+    path: /home
+    source: /home
+`
+}
+
 func exists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
