@@ -116,7 +116,13 @@ devices:
 		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
-	check("lxc", "exec", cfg.Name(), "--", "cloud-init", "status", "--wait")
+	cloud_init := []string{
+		"lxc", "exec", cfg.Name(), "--",
+		"cloud-init", "status", "--wait",
+	}
+	if err := run(cloud_init...); err != nil {
+		return fmt.Errorf("cloud-init failure: %w", err)
+	}
 	return nil
 }
 
