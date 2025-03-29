@@ -66,10 +66,31 @@ func (app App) startIfNeeded() error {
 	}
 }
 
+func (app App) isVM() (bool, error) {
+	// Connect to LXD over the Unix socket
+	c, err := connectLXDUnix("", nil)
+	if err != nil {
+		return false, err
+	}
+
+	// middle arg is the etag
+	inst, _, err := c.GetInstance(app.Config.Name())
+	if err != nil {
+		return false, err
+	}
+
+	return inst.Type == "virtual-machine", nil
+}
+
 func (app App) wait() error {
-	if !app.Config.IsVM() {
+	vm, err := app.isVM()
+	if err != nil {
+		return err
+	}
+	if !vm {
 		return nil
 	}
+
 	for {
 		err := run("lxc", "exec", app.Config.Name(), "--", "/bin/true")
 		if err == nil {

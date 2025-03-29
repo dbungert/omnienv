@@ -25,13 +25,17 @@ func Patch[T any](target *T, mock T) func() {
 }
 
 var launchTests = []struct {
-	vm       bool
-	mockCmds [][]string
+	summary     string
+	vm          bool
+	mockCmds    [][]string
+	willCheckVM bool
 
 	runCmds [][]string
 	errMsg  string
 }{{
-	mockCmds: [][]string{[]string{"true"}, []string{"true"}},
+	summary:     "simple launch",
+	mockCmds:    [][]string{[]string{"true"}, []string{"true"}},
+	willCheckVM: true,
 	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s"},
 		[]string{
@@ -41,7 +45,9 @@ var launchTests = []struct {
 	},
 	errMsg: "",
 }, {
-	mockCmds: [][]string{[]string{"true"}, []string{"false"}},
+	summary:     "launch failed cloud-init",
+	mockCmds:    [][]string{[]string{"true"}, []string{"false"}},
+	willCheckVM: true,
 	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s"},
 		[]string{
@@ -51,8 +57,10 @@ var launchTests = []struct {
 	},
 	errMsg: "cloud-init failure: exit status 1",
 }, {
-	vm:       true,
-	mockCmds: [][]string{[]string{"true"}, []string{"true"}, []string{"true"}},
+	summary:     "launch vm",
+	vm:          true,
+	mockCmds:    [][]string{[]string{"true"}, []string{"true"}, []string{"true"}},
+	willCheckVM: true,
 	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s", "--vm"},
 		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
@@ -63,15 +71,19 @@ var launchTests = []struct {
 	},
 	errMsg: "",
 }, {
-	vm:       true,
-	mockCmds: [][]string{[]string{"false"}},
+	summary:     "launch vm failure",
+	vm:          true,
+	mockCmds:    [][]string{[]string{"false"}},
+	willCheckVM: false,
 	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s", "--vm"},
 	},
 	errMsg: "failed to create instance: exit status 1",
 }, {
-	vm:       true,
-	mockCmds: [][]string{[]string{"true"}, []string{"false"}},
+	summary:     "vm launch wait strange failure",
+	vm:          true,
+	mockCmds:    [][]string{[]string{"true"}, []string{"false"}},
+	willCheckVM: true,
 	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s", "--vm"},
 		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
@@ -93,28 +105,40 @@ func TestLaunch(t *testing.T) {
 		if test.vm {
 			app.Config.Virtualization = "vm"
 		}
+		if test.willCheckVM {
+			iType := "container"
+			if test.vm {
+				iType = "virtual-machine"
+			}
+			mis := mockGetInstance(t, iType, nil)
+			restore := patchConnect(mis, nil)
+			defer restore()
+		}
+
 		err := app.launch()
-		assert.Equal(t, test.runCmds, runCmds)
+		assert.Equal(t, test.runCmds, runCmds, test.summary)
+
 		if len(test.errMsg) > 0 {
-			assert.ErrorContains(t, err, test.errMsg)
+			assert.ErrorContains(t, err, test.errMsg, test.summary)
 		} else {
-			assert.Nil(t, err)
+			assert.Nil(t, err, test.summary)
 		}
 	}
 }
 
 var waitTests = []struct {
+	summary  string
 	vm       bool
 	mockCmds [][]string
 
 	runCmds [][]string
 	err     error
 }{{
-	mockCmds: [][]string{},
-	runCmds:  [][]string{},
-	err:      nil,
+	summary: "non-vm",
+	runCmds: [][]string{},
 }, {
-	vm: true,
+	summary: "happy path",
+	vm:      true,
 	mockCmds: [][]string{
 		[]string{"sh", "-c", "exit 255"},
 		[]string{"true"},
@@ -123,14 +147,12 @@ var waitTests = []struct {
 		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
 		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
 	},
-	err: nil,
 }, {
+	summary:  "strange exit",
 	vm:       true,
 	mockCmds: [][]string{[]string{"sh", "-c", "exit 1"}},
-	runCmds: [][]string{
-		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
-	},
-	err: errors.New("strange exit code 1"),
+	err:      errors.New("strange exit code 1"),
+	runCmds:  [][]string{[]string{"lxc", "exec", "l-s", "--", "/bin/true"}},
 }}
 
 func TestWait(t *testing.T) {
@@ -147,7 +169,16 @@ func TestWait(t *testing.T) {
 		if test.vm {
 			app.Config.Virtualization = "vm"
 		}
-		assert.Equal(t, test.err, app.wait())
+
+		iType := "container"
+		if test.vm {
+			iType = "virtual-machine"
+		}
+		mis := mockGetInstance(t, iType, nil)
+		restoreConnect := patchConnect(mis, nil)
+		defer restoreConnect()
+
+		assert.Equal(t, test.err, app.wait(), test.summary)
 		assert.Equal(t, test.runCmds, runCmds)
 	}
 }
@@ -188,6 +219,13 @@ func TestStartIfNeeded_ConnectFail(t *testing.T) {
 	restore := patchConnect(nil, errors.New("error"))
 	defer restore()
 	assert.NotNil(t, mockApp().startIfNeeded())
+}
+
+func mockGetInstance(t *testing.T, instanceType string, err error) *mocks.MockInstanceServer {
+	mis := mocks.NewMockInstanceServer(t)
+	instance := api.Instance{Type: instanceType}
+	mis.On("GetInstance", "l-s").Return(&instance, "", err)
+	return mis
 }
 
 func mockGetInstanceState(t *testing.T, status string, err error) *mocks.MockInstanceServer {
@@ -265,10 +303,6 @@ var shellTests = []struct {
 }}
 
 func TestShell(t *testing.T) {
-	mis := mockGetInstanceState(t, "Running", nil)
-	restore := patchConnect(mis, nil)
-	defer restore()
-
 	restorePWD := patchEnv("PWD", "/tmp")
 	defer restorePWD()
 
@@ -291,6 +325,14 @@ func TestShell(t *testing.T) {
 			return nil
 		})
 		defer restoreSE()
+
+		mis := mockGetInstanceState(t, "Running", nil)
+		restore := patchConnect(mis, nil)
+		defer restore()
+
+		instance := api.Instance{Type: "container"}
+		mis.On("GetInstance", "l-s").Return(&instance, "", nil)
+
 		app := mockApp()
 		app.Opts = test.opts
 		assert.Nil(t, app.shell())
@@ -308,6 +350,9 @@ func TestShell_LXCFail(t *testing.T) {
 	mis := mockGetInstanceState(t, "Running", nil)
 	restore := patchConnect(mis, nil)
 	defer restore()
+
+	instance := api.Instance{Type: "container"}
+	mis.On("GetInstance", "l-s").Return(&instance, "", nil)
 
 	restoreLP := Patch(&lookPath, func(file string) (string, error) {
 		return "lxc", nil
