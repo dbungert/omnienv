@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"testing"
 
@@ -92,13 +93,25 @@ var launchTests = []struct {
 }}
 
 func TestLaunch(t *testing.T) {
+	tempDir := t.TempDir()
+
 	for _, test := range launchTests {
 		idx := -1
+		tempFile, err := os.CreateTemp(tempDir, "test-")
+		if err != nil {
+			t.Fatalf("Failed to create temporary file: %v", err)
+		}
+		defer tempFile.Close()
+
 		runCmds := [][]string{}
 		restore := Patch(&command, func(arg0 string, rest ...string) *exec.Cmd {
 			runCmds = append(runCmds, append([]string{arg0}, rest...))
 			idx += 1
-			return exec.Command(test.mockCmds[idx][0], test.mockCmds[idx][1:]...)
+			cmd := exec.Command(test.mockCmds[idx][0], test.mockCmds[idx][1:]...)
+			if idx == 0 {
+				cmd.Stdout = tempfile
+			}
+			return cmd
 		})
 		defer restore()
 		app := mockApp()
