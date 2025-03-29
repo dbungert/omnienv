@@ -32,7 +32,7 @@ func start(c lxd.InstanceServer, cfg Config) error {
 	return nil
 }
 
-func startIfNeeded(cfg Config) error {
+func (app App) startIfNeeded() error {
 	// Connect to LXD over the Unix socket
 	c, err := connectLXDUnix("", nil)
 	if err != nil {
@@ -40,7 +40,7 @@ func startIfNeeded(cfg Config) error {
 	}
 
 	// middle arg is the etag
-	state, _, err := c.GetInstanceState(cfg.Name())
+	state, _, err := c.GetInstanceState(app.Config.Name())
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func startIfNeeded(cfg Config) error {
 	slog.Debug("startIfNeeded", "instanceStatus", state.Status)
 	switch state.Status {
 	case "Stopped":
-		return start(c, cfg)
+		return start(c, app.Config)
 	case "Running":
 		// no action required
 		return nil
@@ -154,7 +154,7 @@ func (app App) lxcExec(script string) error {
 }
 
 func (app App) shell() error {
-	if err := startIfNeeded(app.Config); err != nil {
+	if err := app.startIfNeeded(); err != nil {
 		return fmt.Errorf("failed to start instance: %w", err)
 	}
 

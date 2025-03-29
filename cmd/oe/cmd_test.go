@@ -200,7 +200,7 @@ func patchConnect(is lxd.InstanceServer, err error) func() {
 func TestStartIfNeeded_ConnectFail(t *testing.T) {
 	restore := patchConnect(nil, errors.New("error"))
 	defer restore()
-	assert.NotNil(t, startIfNeeded(Config{}))
+	assert.NotNil(t, App{}.startIfNeeded())
 }
 
 func mockGetInstanceState(t *testing.T, status string, err error) *mocks.MockInstanceServer {
@@ -214,21 +214,21 @@ func TestStartIfNeeded_GISFail(t *testing.T) {
 	mis := mockGetInstanceState(t, "", fmt.Errorf("error"))
 	restore := patchConnect(mis, nil)
 	defer restore()
-	assert.NotNil(t, startIfNeeded(Config{}))
+	assert.NotNil(t, App{}.startIfNeeded())
 }
 
 func TestStartIfNeeded_UnknownState(t *testing.T) {
 	mis := mockGetInstanceState(t, "NotAState", nil)
 	restore := patchConnect(mis, nil)
 	defer restore()
-	assert.NotNil(t, startIfNeeded(Config{}))
+	assert.NotNil(t, App{}.startIfNeeded())
 }
 
 func TestStartIfNeeded_Running(t *testing.T) {
 	mis := mockGetInstanceState(t, "Running", nil)
 	restore := patchConnect(mis, nil)
 	defer restore()
-	assert.Nil(t, startIfNeeded(Config{}))
+	assert.Nil(t, App{}.startIfNeeded())
 }
 
 func TestStartIfNeeded_Stopped(t *testing.T) {
@@ -236,7 +236,7 @@ func TestStartIfNeeded_Stopped(t *testing.T) {
 	mockUpdateInstanceState(t, mis, nil)
 	restore := patchConnect(mis, nil)
 	defer restore()
-	assert.Nil(t, startIfNeeded(Config{}))
+	assert.Nil(t, App{}.startIfNeeded())
 }
 
 func TestLxcExec(t *testing.T) {
