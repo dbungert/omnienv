@@ -13,6 +13,11 @@ import (
 	"github.com/canonical/lxd/shared/api"
 )
 
+type App struct {
+	Config
+	Opts
+}
+
 func start(c lxd.InstanceServer, cfg Config) error {
 	reqState := api.InstanceStatePut{Action: "start", Timeout: -1}
 	op, err := c.UpdateInstanceState(cfg.Name(), reqState, "")
@@ -148,26 +153,26 @@ func lxcExec(cfg Config, script string) error {
 	return syscallExec(args[0], args, envv)
 }
 
-func shell(cfg Config, opts Opts) error {
-	if err := startIfNeeded(cfg); err != nil {
+func (app App) shell() error {
+	if err := startIfNeeded(app.Config); err != nil {
 		return fmt.Errorf("failed to start instance: %w", err)
 	}
 
-	if err := wait(cfg); err != nil {
+	if err := wait(app.Config); err != nil {
 		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
 	// in instance, change to the directory we are in right now
 	script := fmt.Sprintf(`cd "%s" && exec $SHELL`, os.Getenv("PWD"))
-	if len(opts.Params) > 1 {
+	if len(app.Opts.Params) > 1 {
 		// run shell with the command we were given
 		script = fmt.Sprintf(
 			`%s -c "%s"`, script,
-			shellescape.QuoteCommand(opts.Params[1:]),
+			shellescape.QuoteCommand(app.Opts.Params[1:]),
 		)
 	}
 
-	if err := lxcExec(cfg, script); err != nil {
+	if err := lxcExec(app.Config, script); err != nil {
 		return fmt.Errorf("failed to lxc exec: %w", err)
 	}
 	return nil
@@ -187,13 +192,16 @@ func main() {
 		SlogFatal("fatal error", "error", err)
 	}
 
+	app := App{Opts: opts}
+	app.Config = cfg
+
 	if opts.Launch {
 		if err := launch(cfg); err != nil {
 			SlogFatal("failed to launch", "error", err)
 		}
 	}
 
-	if err := shell(cfg, opts); err != nil {
+	if err := app.shell(); err != nil {
 		SlogFatal("failed to create shell", "error", err)
 	}
 }

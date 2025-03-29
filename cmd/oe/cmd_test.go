@@ -305,7 +305,7 @@ func TestShell(t *testing.T) {
 			return nil
 		})
 		defer restoreSE()
-		assert.Nil(t, shell(Config{}, test.opts))
+		assert.Nil(t, App{Config{}, test.opts}.shell())
 	}
 }
 
@@ -313,7 +313,7 @@ func TestShell_StartFail(t *testing.T) {
 	mis := mockGetInstanceState(t, "", fmt.Errorf("error"))
 	restore := patchConnect(mis, nil)
 	defer restore()
-	assert.NotNil(t, shell(Config{}, Opts{}))
+	assert.NotNil(t, App{Config{}, Opts{}}.shell())
 }
 
 func TestShell_LXCFail(t *testing.T) {
@@ -330,5 +330,5 @@ func TestShell_LXCFail(t *testing.T) {
 		return errors.New("error")
 	})
 	defer restoreSE()
-	assert.NotNil(t, shell(Config{}, Opts{}))
+	assert.NotNil(t, App{Config{}, Opts{}}.shell())
 }
