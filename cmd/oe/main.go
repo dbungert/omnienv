@@ -22,6 +22,12 @@ func run(args ...string) error {
 	return cmd.Run()
 }
 
+func runDevNull(args ...string) error {
+	cmd := command(args[0], args[1:]...)
+	slog.Debug("run", "command", args)
+	return cmd.Run()
+}
+
 type App struct {
 	Config
 	Opts
@@ -93,9 +99,13 @@ func (app App) wait() error {
 		return nil
 	}
 
+	fmt.Print("Waiting.")
 	for {
-		err := run("lxc", "exec", app.Config.Name(), "--", "/bin/true")
+		err := runDevNull(
+			"lxc", "exec", app.Config.Name(), "--", "/bin/true",
+		)
 		if err == nil {
+			fmt.Println()
 			return nil
 		}
 
@@ -107,6 +117,7 @@ func (app App) wait() error {
 		if ec := exitError.ExitCode(); ec != 255 {
 			return fmt.Errorf("strange exit code %d", ec)
 		} else {
+			fmt.Print(".")
 			time.Sleep(time.Second)
 		}
 	}
