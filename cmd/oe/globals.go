@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 
 	lxd "github.com/canonical/lxd/client"
 )
@@ -15,3 +16,4 @@ var lookPath = exec.LookPath
 var exit = os.Exit
 var stderr io.Writer = os.Stderr
 var syscallExec = syscall.Exec
+var timeSleep = time.Sleep

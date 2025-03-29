@@ -118,7 +118,7 @@ func (app App) wait() error {
 			return fmt.Errorf("strange exit code %d", ec)
 		} else {
 			fmt.Print(".")
-			time.Sleep(time.Second)
+			timeSleep(time.Second)
 		}
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 	"testing"
+	"time"
 
 	lxd "github.com/canonical/lxd/client"
 	"github.com/canonical/lxd/shared/api"
@@ -177,6 +178,9 @@ func TestWait(t *testing.T) {
 		mis := mockGetInstance(t, iType, nil)
 		restoreConnect := patchConnect(mis, nil)
 		defer restoreConnect()
+
+		restoreSleep := Patch(&timeSleep, func(d time.Duration) {})
+		defer restoreSleep()
 
 		assert.Equal(t, test.err, app.wait(), test.summary)
 		assert.Equal(t, test.runCmds, runCmds)
