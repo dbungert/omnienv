@@ -14,6 +14,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func mockApp() App {
+	return App{Config: Config{Label: "l", System: "s"}}
+}
+
 func Patch[T any](target *T, mock T) func() {
 	original := *target
 	*target = mock
@@ -21,16 +25,12 @@ func Patch[T any](target *T, mock T) func() {
 }
 
 var launchTests = []struct {
-	config   Config
+	vm       bool
 	mockCmds [][]string
 
 	runCmds [][]string
 	errMsg  string
 }{{
-	config: Config{
-		Label:  "l",
-		System: "s",
-	},
 	mockCmds: [][]string{[]string{"true"}, []string{"true"}},
 	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s"},
@@ -41,10 +41,6 @@ var launchTests = []struct {
 	},
 	errMsg: "",
 }, {
-	config: Config{
-		Label:  "l",
-		System: "s",
-	},
 	mockCmds: [][]string{[]string{"true"}, []string{"false"}},
 	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s"},
@@ -55,11 +51,7 @@ var launchTests = []struct {
 	},
 	errMsg: "cloud-init failure: exit status 1",
 }, {
-	config: Config{
-		Label:          "l",
-		System:         "s",
-		Virtualization: "vm",
-	},
+	vm:       true,
 	mockCmds: [][]string{[]string{"true"}, []string{"true"}, []string{"true"}},
 	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s", "--vm"},
@@ -71,28 +63,15 @@ var launchTests = []struct {
 	},
 	errMsg: "",
 }, {
-	config: Config{
-		Label:          "l",
-		System:         "s",
-		Virtualization: "vm",
-	},
-	mockCmds: [][]string{
-		[]string{"false"},
-	},
+	vm:       true,
+	mockCmds: [][]string{[]string{"false"}},
 	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s", "--vm"},
 	},
 	errMsg: "failed to create instance: exit status 1",
 }, {
-	config: Config{
-		Label:          "l",
-		System:         "s",
-		Virtualization: "vm",
-	},
-	mockCmds: [][]string{
-		[]string{"true"},
-		[]string{"false"},
-	},
+	vm:       true,
+	mockCmds: [][]string{[]string{"true"}, []string{"false"}},
 	runCmds: [][]string{
 		[]string{"lxc", "launch", "ubuntu-daily:s", "l-s", "--vm"},
 		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
@@ -110,7 +89,11 @@ func TestLaunch(t *testing.T) {
 			return exec.Command(test.mockCmds[idx][0], test.mockCmds[idx][1:]...)
 		})
 		defer restore()
-		err := App{Config: test.config}.launch()
+		app := mockApp()
+		if test.vm {
+			app.Config.Virtualization = "vm"
+		}
+		err := app.launch()
 		assert.Equal(t, test.runCmds, runCmds)
 		if len(test.errMsg) > 0 {
 			assert.ErrorContains(t, err, test.errMsg)
@@ -121,25 +104,17 @@ func TestLaunch(t *testing.T) {
 }
 
 var waitTests = []struct {
-	config   Config
+	vm       bool
 	mockCmds [][]string
 
 	runCmds [][]string
 	err     error
 }{{
-	config: Config{
-		Label:  "l",
-		System: "s",
-	},
 	mockCmds: [][]string{},
 	runCmds:  [][]string{},
 	err:      nil,
 }, {
-	config: Config{
-		Label:          "l",
-		System:         "s",
-		Virtualization: "vm",
-	},
+	vm: true,
 	mockCmds: [][]string{
 		[]string{"sh", "-c", "exit 255"},
 		[]string{"true"},
@@ -150,14 +125,8 @@ var waitTests = []struct {
 	},
 	err: nil,
 }, {
-	config: Config{
-		Label:          "l",
-		System:         "s",
-		Virtualization: "vm",
-	},
-	mockCmds: [][]string{
-		[]string{"sh", "-c", "exit 1"},
-	},
+	vm:       true,
+	mockCmds: [][]string{[]string{"sh", "-c", "exit 1"}},
 	runCmds: [][]string{
 		[]string{"lxc", "exec", "l-s", "--", "/bin/true"},
 	},
@@ -174,7 +143,11 @@ func TestWait(t *testing.T) {
 			return exec.Command(test.mockCmds[idx][0], test.mockCmds[idx][1:]...)
 		})
 		defer restore()
-		assert.Equal(t, test.err, App{Config: test.config}.wait())
+		app := mockApp()
+		if test.vm {
+			app.Config.Virtualization = "vm"
+		}
+		assert.Equal(t, test.err, app.wait())
 		assert.Equal(t, test.runCmds, runCmds)
 	}
 }
@@ -182,26 +155,26 @@ func TestWait(t *testing.T) {
 func TestStartFailedUIS(t *testing.T) {
 	mis := mocks.NewMockInstanceServer(t)
 	err := fmt.Errorf("failed start")
-	mis.On("UpdateInstanceState", "-", mock.Anything, "").Return(nil, err)
-	assert.NotNil(t, App{}.start(mis))
+	mis.On("UpdateInstanceState", "l-s", mock.Anything, "").Return(nil, err)
+	assert.NotNil(t, mockApp().start(mis))
 }
 
 func mockUpdateInstanceState(t *testing.T, mis *mocks.MockInstanceServer, err error) {
 	op := mocks.NewMockOperation(t)
-	mis.On("UpdateInstanceState", "-", mock.Anything, "").Return(op, nil)
+	mis.On("UpdateInstanceState", "l-s", mock.Anything, "").Return(op, nil)
 	op.On("Wait").Return(err)
 }
 
 func TestStart(t *testing.T) {
 	mis := mocks.NewMockInstanceServer(t)
 	mockUpdateInstanceState(t, mis, nil)
-	assert.Nil(t, App{}.start(mis))
+	assert.Nil(t, mockApp().start(mis))
 }
 
 func TestStartFailedWait(t *testing.T) {
 	mis := mocks.NewMockInstanceServer(t)
 	mockUpdateInstanceState(t, mis, fmt.Errorf("error"))
-	assert.NotNil(t, App{}.start(mis))
+	assert.NotNil(t, mockApp().start(mis))
 }
 
 func patchConnect(is lxd.InstanceServer, err error) func() {
@@ -214,13 +187,13 @@ func patchConnect(is lxd.InstanceServer, err error) func() {
 func TestStartIfNeeded_ConnectFail(t *testing.T) {
 	restore := patchConnect(nil, errors.New("error"))
 	defer restore()
-	assert.NotNil(t, App{}.startIfNeeded())
+	assert.NotNil(t, mockApp().startIfNeeded())
 }
 
 func mockGetInstanceState(t *testing.T, status string, err error) *mocks.MockInstanceServer {
 	mis := mocks.NewMockInstanceServer(t)
 	state := api.InstanceState{Status: status}
-	mis.On("GetInstanceState", "-").Return(&state, "", err)
+	mis.On("GetInstanceState", "l-s").Return(&state, "", err)
 	return mis
 }
 
@@ -228,21 +201,21 @@ func TestStartIfNeeded_GISFail(t *testing.T) {
 	mis := mockGetInstanceState(t, "", fmt.Errorf("error"))
 	restore := patchConnect(mis, nil)
 	defer restore()
-	assert.NotNil(t, App{}.startIfNeeded())
+	assert.NotNil(t, mockApp().startIfNeeded())
 }
 
 func TestStartIfNeeded_UnknownState(t *testing.T) {
 	mis := mockGetInstanceState(t, "NotAState", nil)
 	restore := patchConnect(mis, nil)
 	defer restore()
-	assert.NotNil(t, App{}.startIfNeeded())
+	assert.NotNil(t, mockApp().startIfNeeded())
 }
 
 func TestStartIfNeeded_Running(t *testing.T) {
 	mis := mockGetInstanceState(t, "Running", nil)
 	restore := patchConnect(mis, nil)
 	defer restore()
-	assert.Nil(t, App{}.startIfNeeded())
+	assert.Nil(t, mockApp().startIfNeeded())
 }
 
 func TestStartIfNeeded_Stopped(t *testing.T) {
@@ -250,7 +223,7 @@ func TestStartIfNeeded_Stopped(t *testing.T) {
 	mockUpdateInstanceState(t, mis, nil)
 	restore := patchConnect(mis, nil)
 	defer restore()
-	assert.Nil(t, App{}.startIfNeeded())
+	assert.Nil(t, mockApp().startIfNeeded())
 }
 
 func TestLxcExec(t *testing.T) {
@@ -311,14 +284,16 @@ func TestShell(t *testing.T) {
 		restoreSE := Patch(&syscallExec, func(argv0 string, argv []string, envv []string) (err error) {
 			assert.Equal(t, argv0, "lxc")
 			assert.Equal(t, argv, []string{
-				"lxc", "exec", "-", "--",
+				"lxc", "exec", "l-s", "--",
 				"su", "-P", "-", "user", "-c",
 				test.script,
 			})
 			return nil
 		})
 		defer restoreSE()
-		assert.Nil(t, App{Config{}, test.opts}.shell())
+		app := mockApp()
+		app.Opts = test.opts
+		assert.Nil(t, app.shell())
 	}
 }
 
@@ -326,7 +301,7 @@ func TestShell_StartFail(t *testing.T) {
 	mis := mockGetInstanceState(t, "", fmt.Errorf("error"))
 	restore := patchConnect(mis, nil)
 	defer restore()
-	assert.NotNil(t, App{Config{}, Opts{}}.shell())
+	assert.NotNil(t, mockApp().shell())
 }
 
 func TestShell_LXCFail(t *testing.T) {
@@ -343,5 +318,5 @@ func TestShell_LXCFail(t *testing.T) {
 		return errors.New("error")
 	})
 	defer restoreSE()
-	assert.NotNil(t, App{Config{}, Opts{}}.shell())
+	assert.NotNil(t, mockApp().shell())
 }

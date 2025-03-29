@@ -6,7 +6,7 @@ oe:
 	go build ./cmd/$@
 
 test:
-	go test -cover ./...
+	go test -cover -failfast ./...
 
 clean:
 	rm -f oe .cover.out
