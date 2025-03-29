@@ -90,7 +90,7 @@ func (app App) wait() error {
 }
 
 func (app App) launch() error {
-	image := "ubuntu-daily:" + app.Config.Series
+	image := "ubuntu-daily:" + app.Config.System
 	args := []string{"lxc", "launch", image, app.Config.Name()}
 	if app.Config.IsVM() {
 		args = append(args, "--vm")

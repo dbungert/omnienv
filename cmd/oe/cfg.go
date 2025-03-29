@@ -15,13 +15,13 @@ var cfgName = ".omnienv.yaml"
 var errCfgNotFound = errors.New("Config not found")
 
 type Config struct {
-	// Series indicates what version of Ubuntu to base this upon.
-	Series string
+	// System indicates what distribution and version to base this upon.
+	System string
 	// RootDir is the parent directory of the .omnienv.yaml file.
 	RootDir string
 	// Label is set to the basename of RootDir by default, or may be
 	// overwritten with the supplied value.  Used as part of the name of
-	// the instance, along with Series.
+	// the instance, along with System.
 	Label string
 	// Backend indicates upon what we are running the instance.
 	// Only "lxd" is implemented.
@@ -29,12 +29,13 @@ type Config struct {
 	// Virtualization chooses between "container" (default) and "vm".
 	Virtualization string
 
-	// legacy keys that are unmarshalled for warning purposes
+	// unsupported keys that are unmarshalled for warning purposes
 	Project string
+	Series  string
 }
 
 func (cfg Config) Name() string {
-	return fmt.Sprintf("%s-%s", cfg.Label, cfg.Series)
+	return fmt.Sprintf("%s-%s", cfg.Label, cfg.System)
 }
 
 func (cfg Config) IsVM() bool {
@@ -80,8 +81,8 @@ func loadConfig(path string) (Config, error) {
 		cfg.Label = filepath.Base(cfg.RootDir)
 	}
 
-	if cfg.Series == "" {
-		cfg.Series = os.Getenv("DEFAULT_SERIES")
+	if cfg.System == "" {
+		cfg.System = os.Getenv("DEFAULT_SERIES")
 	}
 
 	if cfg.Virtualization == "" {
@@ -89,7 +90,10 @@ func loadConfig(path string) (Config, error) {
 	}
 
 	if cfg.Project != "" {
-		slog.Warn("legacy key", "project", cfg.Project)
+		slog.Warn("unsupported key", "project", cfg.Project)
+	}
+	if cfg.Series != "" {
+		slog.Warn("unsupported key", "series", cfg.Series)
 	}
 	slog.Debug("loadConfig", "config", cfg)
 	return cfg, nil

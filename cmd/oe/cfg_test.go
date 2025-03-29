@@ -17,7 +17,7 @@ var cfgTests = []struct {
 	summary: "basic name",
 	config: Config{
 		Label:  "l",
-		Series: "s",
+		System: "s",
 	},
 	name: "l-s",
 	vm:   false,
@@ -25,7 +25,7 @@ var cfgTests = []struct {
 	summary: "vm",
 	config: Config{
 		Label:          "foo",
-		Series:         "bar",
+		System:         "bar",
 		Virtualization: "vm",
 	},
 	name: "foo-bar",
@@ -75,39 +75,39 @@ var loadCfgTests = []struct {
 	config Config
 	warn   string
 }{{
-	summary: "series",
-	data:    "series: plucky",
+	summary: "system",
+	data:    "system: plucky",
 	config: Config{
-		Series:         "plucky",
+		System:         "plucky",
 		Virtualization: "container",
 	},
 }, {
-	summary: "series / label",
+	summary: "system / label",
 	data: `
-series: warty
+system: warty
 label: ubiquity
 `,
 	config: Config{
-		Series:         "warty",
+		System:         "warty",
 		Label:          "ubiquity",
 		Virtualization: "container",
 	},
 }, {
-	summary: "series environ / lxd / default virt",
+	summary: "system environ / lxd / default virt",
 	data:    "backend: lxd",
 	config: Config{
-		Series:         "zesty",
+		System:         "zesty",
 		Backend:        "lxd",
 		Virtualization: "container",
 	},
 }, {
-	summary: "series environ / lxd / vm",
+	summary: "system environ / lxd / vm",
 	data: `
 backend: lxd
 virtualization: vm
 `,
 	config: Config{
-		Series:         "zesty",
+		System:         "zesty",
 		Backend:        "lxd",
 		Virtualization: "vm",
 	},
@@ -116,10 +116,19 @@ virtualization: vm
 	data:    "project: proj",
 	config: Config{
 		Project:        "proj",
-		Series:         "zesty",
+		System:         "zesty",
 		Virtualization: "container",
 	},
-	warn: `msg="legacy key"`,
+	warn: `msg="unsupported key"`,
+}, {
+	summary: "series",
+	data:    "series: warty",
+	config: Config{
+		Series:         "warty",
+		System:         "zesty",
+		Virtualization: "container",
+	},
+	warn: `msg="unsupported key"`,
 }}
 
 func TestLoadCfg(t *testing.T) {
@@ -179,12 +188,12 @@ func TestGetConfig(t *testing.T) {
 	assert.Nil(t, os.Chdir(tempdir))
 	defer func() { _ = os.Chdir(curdir) }()
 
-	data := []byte("series: warty")
+	data := []byte("system: warty")
 	filename := tempdir + "/" + cfgName
 	assert.Nil(t, os.WriteFile(filename, data, 0644))
 	actual, err := GetConfig()
 	assert.Nil(t, err)
-	assert.Equal(t, "warty", actual.Series)
+	assert.Equal(t, "warty", actual.System)
 }
 
 func TestNotGetConfig(t *testing.T) {

@@ -29,7 +29,7 @@ var launchTests = []struct {
 }{{
 	config: Config{
 		Label:  "l",
-		Series: "s",
+		System: "s",
 	},
 	mockCmds: [][]string{[]string{"true"}, []string{"true"}},
 	runCmds: [][]string{
@@ -43,7 +43,7 @@ var launchTests = []struct {
 }, {
 	config: Config{
 		Label:  "l",
-		Series: "s",
+		System: "s",
 	},
 	mockCmds: [][]string{[]string{"true"}, []string{"false"}},
 	runCmds: [][]string{
@@ -57,7 +57,7 @@ var launchTests = []struct {
 }, {
 	config: Config{
 		Label:          "l",
-		Series:         "s",
+		System:         "s",
 		Virtualization: "vm",
 	},
 	mockCmds: [][]string{[]string{"true"}, []string{"true"}, []string{"true"}},
@@ -73,7 +73,7 @@ var launchTests = []struct {
 }, {
 	config: Config{
 		Label:          "l",
-		Series:         "s",
+		System:         "s",
 		Virtualization: "vm",
 	},
 	mockCmds: [][]string{
@@ -86,7 +86,7 @@ var launchTests = []struct {
 }, {
 	config: Config{
 		Label:          "l",
-		Series:         "s",
+		System:         "s",
 		Virtualization: "vm",
 	},
 	mockCmds: [][]string{
@@ -129,7 +129,7 @@ var waitTests = []struct {
 }{{
 	config: Config{
 		Label:  "l",
-		Series: "s",
+		System: "s",
 	},
 	mockCmds: [][]string{},
 	runCmds:  [][]string{},
@@ -137,7 +137,7 @@ var waitTests = []struct {
 }, {
 	config: Config{
 		Label:          "l",
-		Series:         "s",
+		System:         "s",
 		Virtualization: "vm",
 	},
 	mockCmds: [][]string{
@@ -152,7 +152,7 @@ var waitTests = []struct {
 }, {
 	config: Config{
 		Label:          "l",
-		Series:         "s",
+		System:         "s",
 		Virtualization: "vm",
 	},
 	mockCmds: [][]string{
