@@ -287,8 +287,8 @@ var shellTests = []struct {
 	opts:   Opts{},
 	script: `cd "/tmp" && exec $SHELL`,
 }, {
-	opts:   Opts{Params: []string{"a", "b"}},
-	script: `cd "/tmp" && exec $SHELL -c "b"`,
+	opts:   Opts{Params: []string{"a"}},
+	script: `cd "/tmp" && exec $SHELL -c "a"`,
 }}
 
 func TestShell(t *testing.T) {

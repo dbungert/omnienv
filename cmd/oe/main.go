@@ -164,11 +164,11 @@ func (app App) shell() error {
 
 	// in instance, change to the directory we are in right now
 	script := fmt.Sprintf(`cd "%s" && exec $SHELL`, os.Getenv("PWD"))
-	if len(app.Opts.Params) > 1 {
+	if len(app.Opts.Params) > 0 {
 		// run shell with the command we were given
 		script = fmt.Sprintf(
 			`%s -c "%s"`, script,
-			shellescape.QuoteCommand(app.Opts.Params[1:]),
+			shellescape.QuoteCommand(app.Opts.Params),
 		)
 	}
 
@@ -179,7 +179,7 @@ func (app App) shell() error {
 }
 
 func main() {
-	opts, err := GetOpts(os.Args)
+	opts, err := GetOpts(os.Args[1:])
 	if err != nil {
 		return
 	}
