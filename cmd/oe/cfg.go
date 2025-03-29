@@ -43,14 +43,27 @@ func (cfg Config) IsVM() bool {
 }
 
 func (cfg Config) LXDLaunchConfig() string {
-	return `
+	tmap := map[string]string{
+		"WORKDIR": cfg.RootDir,
+	}
+	template := `
 devices:
   home:
     type: disk
     shift: true
     path: /home
     source: /home
+    readonly: true
+  workdir:
+    type: disk
+    readonly: false
+    shift: true
+    path: ${WORKDIR}
+    source: ${WORKDIR}
 `
+	return os.Expand(template, func(key string) string {
+		return tmap[key]
+	})
 }
 
 func exists(path string) bool {
