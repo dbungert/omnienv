@@ -272,11 +272,14 @@ func TestLxcExec(t *testing.T) {
 	})
 	defer restoreLP()
 
+	restoreUser := patchEnv("USER", "user")
+	defer restoreUser()
+
 	restoreSE := Patch(&syscallExec, func(argv0 string, argv []string, envv []string) (err error) {
 		assert.Equal(t, argv0, "/foo/lxc")
 		assert.Equal(t, argv, []string{
 			"/foo/lxc", "exec", "-", "--",
-			"su", "-P", "-", "dbungert", "-c", "bar",
+			"su", "-P", "-", "user", "-c", "bar",
 		})
 		return nil
 	})
