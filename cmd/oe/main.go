@@ -13,6 +13,15 @@ import (
 	"github.com/canonical/lxd/shared/api"
 )
 
+func run(args ...string) error {
+	cmd := command(args[0], args[1:]...)
+	slog.Debug("run", "command", args)
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 type App struct {
 	Config
 	Opts
@@ -55,15 +64,6 @@ func (app App) startIfNeeded() error {
 	default:
 		return fmt.Errorf("no handler for Status %v", state.Status)
 	}
-}
-
-func run(args ...string) error {
-	cmd := command(args[0], args[1:]...)
-	slog.Debug("run", "command", args)
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
 }
 
 func (app App) wait() error {
