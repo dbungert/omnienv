@@ -66,12 +66,12 @@ func run(args ...string) error {
 	return cmd.Run()
 }
 
-func wait(cfg Config) error {
-	if !cfg.IsVM() {
+func (app App) wait() error {
+	if !app.Config.IsVM() {
 		return nil
 	}
 	for {
-		err := run("lxc", "exec", cfg.Name(), "--", "/bin/true")
+		err := run("lxc", "exec", app.Config.Name(), "--", "/bin/true")
 		if err == nil {
 			return nil
 		}
@@ -89,10 +89,10 @@ func wait(cfg Config) error {
 	}
 }
 
-func launch(cfg Config) error {
-	image := "ubuntu-daily:" + cfg.Series
-	args := []string{"lxc", "launch", image, cfg.Name()}
-	if cfg.IsVM() {
+func (app App) launch() error {
+	image := "ubuntu-daily:" + app.Config.Series
+	args := []string{"lxc", "launch", image, app.Config.Name()}
+	if app.Config.IsVM() {
 		args = append(args, "--vm")
 	}
 
@@ -111,12 +111,12 @@ devices:
 		return fmt.Errorf("failed to create instance: %w", err)
 	}
 
-	if err := wait(cfg); err != nil {
+	if err := app.wait(); err != nil {
 		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
 	cloud_init := []string{
-		"lxc", "exec", cfg.Name(), "--",
+		"lxc", "exec", app.Config.Name(), "--",
 		"cloud-init", "status", "--wait",
 	}
 	if err := run(cloud_init...); err != nil {
@@ -158,7 +158,7 @@ func (app App) shell() error {
 		return fmt.Errorf("failed to start instance: %w", err)
 	}
 
-	if err := wait(app.Config); err != nil {
+	if err := app.wait(); err != nil {
 		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
@@ -192,11 +192,10 @@ func main() {
 		SlogFatal("fatal error", "error", err)
 	}
 
-	app := App{Opts: opts}
-	app.Config = cfg
+	app := App{Config: cfg, Opts: opts}
 
 	if opts.Launch {
-		if err := launch(cfg); err != nil {
+		if err := app.launch(); err != nil {
 			SlogFatal("failed to launch", "error", err)
 		}
 	}

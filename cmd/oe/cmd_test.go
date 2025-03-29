@@ -96,7 +96,7 @@ func TestLaunch(t *testing.T) {
 			return exec.Command(test.mockCmds[idx][0], test.mockCmds[idx][1:]...)
 		})
 		defer restore()
-		err := launch(test.config)
+		err := App{Config: test.config}.launch()
 		assert.Equal(t, test.runCmds, runCmds)
 		if len(test.errMsg) > 0 {
 			assert.ErrorContains(t, err, test.errMsg)
@@ -160,9 +160,8 @@ func TestWait(t *testing.T) {
 			return exec.Command(test.mockCmds[idx][0], test.mockCmds[idx][1:]...)
 		})
 		defer restore()
-		err := wait(test.config)
+		assert.Equal(t, test.err, App{Config: test.config}.wait())
 		assert.Equal(t, test.runCmds, runCmds)
-		assert.Equal(t, test.err, err)
 	}
 }
 
