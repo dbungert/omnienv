@@ -27,6 +27,21 @@ var argsTests = []struct {
 	argsInput: []string{"--verbose"},
 	opts:      Opts{Verbose: true},
 	err:       nil,
+}, {
+	summary:   "v",
+	argsInput: []string{"-v"},
+	opts:      Opts{Verbose: true},
+	err:       nil,
+}, {
+	summary:   "system",
+	argsInput: []string{"--system", "foo"},
+	opts:      Opts{System: "foo"},
+	err:       nil,
+}, {
+	summary:   "system + param",
+	argsInput: []string{"--system", "foo", "bar"},
+	opts:      Opts{System: "foo", Params: []string{"bar"}},
+	err:       nil,
 }}
 
 func TestArgs(t *testing.T) {
