@@ -153,6 +153,21 @@ func (app App) launch() error {
 	return nil
 }
 
+// func (app App) sudoLogin(script string) []string {
+// 	return []string{
+// 		"sudo", "--login", "--user", os.Getenv("USER"),
+// 		"sh", "-c", script,
+// 	}
+// }
+
+func (app App) suLogin(script string) []string {
+	args := []string{"su"}
+	if app.Config.SuCanPty() {
+		args = append(args, "-P")
+	}
+	return append(args, "-", os.Getenv("USER"), "-c", script)
+}
+
 func (app App) lxcExec(script string) error {
 	lxc, err := lookPath("lxc")
 	if err != nil {
@@ -160,12 +175,15 @@ func (app App) lxcExec(script string) error {
 	}
 
 	// get a shell to the instance via lxc
-	args := []string{lxc, "exec", app.Config.Name(), "--", "su"}
-	if app.Config.SuCanPty() {
-		args = append(args, "-P")
-	}
-	// login as $USER, run script
-	args = append(args, "-", os.Getenv("USER"), "-c", script)
+	args := []string{lxc, "exec", app.Config.Name(), "--"}
+	args = append(args, app.suLogin(script)...)
+
+	// args = append(args, "su")
+	// if app.Config.SuCanPty() {
+	// 	args = append(args, "-P")
+	// }
+	// // login as $USER, run script
+	// args = append(args, "-", os.Getenv("USER"), "-c", script)
 
 	slog.Debug("exec", "command", args)
 	envv := os.Environ()
