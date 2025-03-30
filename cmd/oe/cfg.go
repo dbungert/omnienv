@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -37,10 +36,6 @@ type Config struct {
 	// unsupported keys that are unmarshalled for warning purposes
 	Project string
 	Series  string
-}
-
-func (cfg Config) Name() string {
-	return fmt.Sprintf("%s-%s", cfg.Label, cfg.System)
 }
 
 func (cfg Config) IsVM() bool {
