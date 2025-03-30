@@ -18,12 +18,15 @@ type App struct {
 	Opts
 }
 
-func (app App) name() string {
-	system := app.Config.System
+func (app App) system() string {
 	if app.Opts.System != "" {
-		system = app.Opts.System
+		return app.Opts.System
 	}
-	return fmt.Sprintf("%s-%s", app.Config.Label, system)
+	return app.Config.System
+}
+
+func (app App) name() string {
+	return fmt.Sprintf("%s-%s", app.Config.Label, app.system())
 }
 
 func (app App) start(c lxd.InstanceServer) error {
