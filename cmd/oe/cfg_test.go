@@ -11,30 +11,19 @@ var cfgTests = []struct {
 	summary string
 	config  Config
 
-	name string
-	vm   bool
+	vm bool
 }{{
 	summary: "basic name",
-	config: Config{
-		Label:  "l",
-		System: "s",
-	},
-	name: "l-s",
-	vm:   false,
+	config:  Config{Label: "l", System: "s"},
+	vm:      false,
 }, {
 	summary: "vm",
-	config: Config{
-		Label:          "foo",
-		System:         "bar",
-		Virtualization: "vm",
-	},
-	name: "foo-bar",
-	vm:   true,
+	config:  Config{Label: "foo", System: "bar", Virtualization: "vm"},
+	vm:      true,
 }}
 
 func TestCfg(t *testing.T) {
 	for _, test := range cfgTests {
-		assert.Equal(t, test.name, test.config.Name(), test.summary)
 		assert.Equal(t, test.vm, test.config.IsVM(), test.summary)
 	}
 }

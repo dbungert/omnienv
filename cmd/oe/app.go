@@ -18,9 +18,13 @@ type App struct {
 	Opts
 }
 
+func (app App) name() string {
+	return fmt.Sprintf("%s-%s", app.Config.Label, app.Config.System)
+}
+
 func (app App) start(c lxd.InstanceServer) error {
 	reqState := api.InstanceStatePut{Action: "start", Timeout: -1}
-	op, err := c.UpdateInstanceState(app.Config.Name(), reqState, "")
+	op, err := c.UpdateInstanceState(app.name(), reqState, "")
 	if err != nil {
 		return err
 	}
@@ -41,7 +45,7 @@ func (app App) startIfNeeded() error {
 	defer c.Disconnect()
 
 	// middle arg is the etag
-	state, _, err := c.GetInstanceState(app.Config.Name())
+	state, _, err := c.GetInstanceState(app.name())
 	if err != nil {
 		return err
 	}
@@ -67,7 +71,7 @@ func (app App) isVM() (bool, error) {
 	defer c.Disconnect()
 
 	// middle arg is the etag
-	inst, _, err := c.GetInstance(app.Config.Name())
+	inst, _, err := c.GetInstance(app.name())
 	if err != nil {
 		return false, err
 	}
@@ -87,7 +91,7 @@ func (app App) wait() error {
 	fmt.Print("Waiting.")
 	for {
 		err := runDevNull(
-			"lxc", "exec", app.Config.Name(), "--", "/bin/true",
+			"lxc", "exec", app.name(), "--", "/bin/true",
 		)
 		if err == nil {
 			fmt.Println()
@@ -110,7 +114,7 @@ func (app App) wait() error {
 
 func (app App) launch() error {
 	image := "ubuntu-daily:" + app.Config.System
-	args := []string{"lxc", "launch", image, app.Config.Name()}
+	args := []string{"lxc", "launch", image, app.name()}
 	if app.Config.IsVM() {
 		args = append(args, "--vm")
 	}
@@ -129,7 +133,7 @@ func (app App) launch() error {
 	}
 
 	cloud_init := []string{
-		"lxc", "exec", app.Config.Name(), "--",
+		"lxc", "exec", app.name(), "--",
 		"cloud-init", "status", "--wait",
 	}
 	if err := run(cloud_init...); err != nil {
@@ -160,7 +164,7 @@ func (app App) lxcExec(script string) error {
 	}
 
 	// get a shell to the instance via lxc
-	args := []string{lxc, "exec", app.Config.Name(), "--"}
+	args := []string{lxc, "exec", app.name(), "--"}
 	args = append(args, app.suLogin(script)...)
 
 	// args = append(args, "su")
