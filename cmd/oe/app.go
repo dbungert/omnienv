@@ -190,13 +190,6 @@ func (app App) lxcExec(script string) error {
 	args := []string{lxc, "exec", app.name(), "--"}
 	args = append(args, app.suLogin(script)...)
 
-	// args = append(args, "su")
-	// if app.Config.SuCanPty() {
-	// 	args = append(args, "-P")
-	// }
-	// // login as $USER, run script
-	// args = append(args, "-", os.Getenv("USER"), "-c", script)
-
 	slog.Debug("exec", "command", args)
 	envv := os.Environ()
 	return syscallExec(args[0], args, envv)
