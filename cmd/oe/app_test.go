@@ -9,6 +9,7 @@ import (
 var nameTests = []struct {
 	summary string
 	config  Config
+	opts    Opts
 
 	name string
 }{{
@@ -16,14 +17,19 @@ var nameTests = []struct {
 	config:  Config{Label: "l", System: "s"},
 	name:    "l-s",
 }, {
-	summary: "vm",
-	config:  Config{Label: "foo", System: "bar", Virtualization: "vm"},
+	summary: "foo-bar",
+	config:  Config{Label: "foo", System: "bar"},
 	name:    "foo-bar",
+}, {
+	summary: "opts override",
+	config:  Config{Label: "l", System: "sys-from-config"},
+	opts:    Opts{System: "sys-from-opts"},
+	name:    "l-sys-from-opts",
 }}
 
 func TestName(t *testing.T) {
 	for _, test := range nameTests {
-		app := App{Config: test.config}
+		app := App{Config: test.config, Opts: test.opts}
 		assert.Equal(t, test.name, app.name(), test.summary)
 	}
 }

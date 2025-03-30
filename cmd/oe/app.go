@@ -19,7 +19,11 @@ type App struct {
 }
 
 func (app App) name() string {
-	return fmt.Sprintf("%s-%s", app.Config.Label, app.Config.System)
+	system := app.Config.System
+	if app.Opts.System != "" {
+		system = app.Opts.System
+	}
+	return fmt.Sprintf("%s-%s", app.Config.Label, system)
 }
 
 func (app App) start(c lxd.InstanceServer) error {
