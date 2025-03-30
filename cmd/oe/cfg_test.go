@@ -205,3 +205,26 @@ func TestNotGetConfig(t *testing.T) {
 	_, err = GetConfig()
 	assert.Equal(t, errCfgNotFound, err)
 }
+
+var suCanPtyTests = []struct {
+	system string
+	result bool
+}{
+	{"plucky", true},
+	{"noble", true},
+	{"jammy", true},
+	{"focal", false},
+	{"bionic", false},
+	{"25.04", true},
+	{"24.04", true},
+	{"22.04", true},
+	{"20.04", false},
+	{"18.04", false},
+}
+
+func TestCanUseSuPty(t *testing.T) {
+	for _, test := range suCanPtyTests {
+		cfg := Config{System: test.system}
+		assert.Equal(t, test.result, cfg.SuCanPty())
+	}
+}

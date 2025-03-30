@@ -159,23 +159,14 @@ func (app App) lxcExec(script string) error {
 		return err
 	}
 
-	args := []string{
-		// get a shell to the instance via lxc
-		lxc, "exec", app.Config.Name(), "--",
-
-		// login as $USER, get a pty, run script
-		"su", "-P", "-", os.Getenv("USER"), "-c", script,
-
-		// su -P only works sometimes
-		//   22.04: jammy+ is fine
-		//   20.04: focal fails the user ownership of /dev/pts/2
-		//   18.04: bionic su has no "-P", at least not build-time
-		//          enabled, and might have the same focal problems if
-		//          we rebuilt
-		//
-		// should I run something like
-		//   https://github.com/creack/pty on the other side?
+	// get a shell to the instance via lxc
+	args := []string{lxc, "exec", app.Config.Name(), "--", "su"}
+	if app.Config.SuCanPty() {
+		args = append(args, "-P")
 	}
+	// login as $USER, run script
+	args = append(args, "-", os.Getenv("USER"), "-c", script)
+
 	slog.Debug("exec", "command", args)
 	envv := os.Environ()
 	return syscallExec(args[0], args, envv)

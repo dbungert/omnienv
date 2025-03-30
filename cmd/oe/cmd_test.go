@@ -283,7 +283,7 @@ func TestLxcExec(t *testing.T) {
 		assert.Equal(t, argv0, "/foo/lxc")
 		assert.Equal(t, argv, []string{
 			"/foo/lxc", "exec", "-", "--",
-			"su", "-P", "-", "user", "-c", "bar",
+			"su", "-", "user", "-c", "bar",
 		})
 		return nil
 	})
@@ -328,7 +328,7 @@ func TestShell(t *testing.T) {
 			assert.Equal(t, argv0, "lxc")
 			assert.Equal(t, argv, []string{
 				"lxc", "exec", "l-s", "--",
-				"su", "-P", "-", "user", "-c",
+				"su", "-", "user", "-c",
 				test.script,
 			})
 			return nil
