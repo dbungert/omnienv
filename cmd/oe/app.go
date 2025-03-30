@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 
 	"al.essio.dev/pkg/shellescape"
@@ -14,8 +15,23 @@ import (
 )
 
 type App struct {
-	Config
-	Opts
+	Config Config
+	Opts   Opts
+}
+
+func (app App) suCanPty() bool {
+	floatVal, err := strconv.ParseFloat(app.system(), 64)
+	if err == nil {
+		// jammy (22.04 is fine)
+		return floatVal > 22.039
+	}
+
+	switch app.system() {
+	case "jammy", "noble", "plucky":
+		return true
+	default:
+		return false
+	}
 }
 
 func (app App) system() string {
@@ -158,7 +174,7 @@ func (app App) launch() error {
 
 func (app App) suLogin(script string) []string {
 	args := []string{"su"}
-	if app.Config.SuCanPty() {
+	if app.suCanPty() {
 		args = append(args, "-P")
 	}
 	return append(args, "-", os.Getenv("USER"), "-c", script)

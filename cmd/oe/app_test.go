@@ -38,3 +38,32 @@ func TestName(t *testing.T) {
 		assert.Equal(t, test.name, app.name(), test.summary)
 	}
 }
+
+var suCanPtyTests = []struct {
+	system     string
+	optsSystem string
+	result     bool
+}{
+	{"plucky", "", true},
+	{"noble", "", true},
+	{"jammy", "", true},
+	{"jammy", "bionic", false},
+	{"focal", "", false},
+	{"bionic", "", false},
+	{"bionic", "jammy", true},
+	{"25.04", "", true},
+	{"24.04", "", true},
+	{"22.04", "", true},
+	{"20.04", "", false},
+	{"18.04", "", false},
+}
+
+func TestCanUseSuPty(t *testing.T) {
+	for _, test := range suCanPtyTests {
+		app := App{
+			Config{System: test.system},
+			Opts{System: test.optsSystem},
+		}
+		assert.Equal(t, test.result, app.suCanPty())
+	}
+}

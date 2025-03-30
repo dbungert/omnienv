@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"gopkg.in/yaml.v2"
 )
@@ -40,21 +39,6 @@ type Config struct {
 
 func (cfg Config) IsVM() bool {
 	return cfg.Virtualization == "vm"
-}
-
-func (cfg Config) SuCanPty() bool {
-	floatVal, err := strconv.ParseFloat(cfg.System, 64)
-	if err == nil {
-		// jammy (22.04 is fine)
-		return floatVal > 22.039
-	}
-
-	switch cfg.System {
-	case "jammy", "noble", "plucky":
-		return true
-	default:
-		return false
-	}
 }
 
 func (cfg Config) LXDLaunchConfig() string {
