@@ -165,19 +165,11 @@ func (app App) launch() error {
 	return nil
 }
 
-// func (app App) sudoLogin(script string) []string {
-// 	return []string{
-// 		"sudo", "--login", "--user", os.Getenv("USER"),
-// 		"sh", "-c", script,
-// 	}
-// }
-
-func (app App) suLogin(script string) []string {
-	args := []string{"su"}
-	if app.suCanPty() {
-		args = append(args, "-P")
+func (app App) sudoLogin(script string) []string {
+	return []string{
+		"sudo", "--login", "--user", os.Getenv("USER"),
+		"sh", "-c", script,
 	}
-	return append(args, "-", os.Getenv("USER"), "-c", script)
 }
 
 func (app App) lxcExec(script string) error {
@@ -188,7 +180,7 @@ func (app App) lxcExec(script string) error {
 
 	// get a shell to the instance via lxc
 	args := []string{lxc, "exec", app.name(), "--"}
-	args = append(args, app.suLogin(script)...)
+	args = append(args, app.sudoLogin(script)...)
 
 	slog.Debug("exec", "command", args)
 	envv := os.Environ()
