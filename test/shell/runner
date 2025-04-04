@@ -1,0 +1,17 @@
+#!/bin/bash
+# vim: set sw=4 ts=4 et :
+set -eux
+
+systems=(
+    # plucky - OK
+    # noble  - OK
+    # jammy  - cloud-init status --wait runs forever
+    # focal  - no pty - need use_pty sudoers cfg
+    # bionic - no pty - need use_pty sudoers cfg
+    # xenial - cloud-init status --wait runs forever
+    # trusty - cloud-init status not supported
+)
+
+for system in ${systems[@]}; do
+    oe --launch -s $system ./shell-test
+done
