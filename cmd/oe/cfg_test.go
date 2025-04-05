@@ -63,6 +63,7 @@ var loadCfgTests = []struct {
 
 	config Config
 	warn   string
+	image  string
 }{{
 	summary: "system",
 	data:    "system: plucky",
@@ -100,6 +101,7 @@ virtualization: vm
 		Backend:        "lxd",
 		Virtualization: "vm",
 	},
+	image: "ubuntu-daily:zesty",
 }, {
 	summary: "project",
 	data:    "project: proj",
@@ -130,6 +132,7 @@ system:
 		System:         System{"jammy", "ubuntu:j"},
 		Virtualization: "container",
 	},
+	image: "ubuntu:j",
 }}
 
 func TestLoadCfg(t *testing.T) {
@@ -160,6 +163,13 @@ func TestLoadCfg(t *testing.T) {
 		assert.Equal(t, test.config, actual, test.summary)
 		if len(test.warn) > 0 {
 			assert.Contains(t, buf.String(), test.warn, test.summary)
+		}
+
+		if test.image != "" {
+			assert.Equal(
+				t, test.config.System.LaunchImage(), test.image,
+				test.summary,
+			)
 		}
 	}
 }

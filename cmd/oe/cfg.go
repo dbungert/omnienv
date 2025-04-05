@@ -22,6 +22,13 @@ func NewSystem(val string) System {
 	return System{Name: val}
 }
 
+func (sys System) LaunchImage() string {
+	if sys.Image == "" {
+		return "ubuntu-daily:" + sys.Name
+	}
+	return sys.Image
+}
+
 func (sys *System) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// if string, unmarshal to Name and done
 	var err error
