@@ -16,7 +16,7 @@ import (
 )
 
 func mockApp() App {
-	return App{Config: Config{Label: "l", System: "s"}}
+	return App{Config: Config{Label: "l", System: NewSystem("s")}}
 }
 
 func Patch[T any](target *T, mock T) func() {

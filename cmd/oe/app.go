@@ -38,7 +38,7 @@ func (app App) system() string {
 	if app.Opts.System != "" {
 		return app.Opts.System
 	}
-	return app.Config.System
+	return app.Config.System.Name
 }
 
 func (app App) name() string {

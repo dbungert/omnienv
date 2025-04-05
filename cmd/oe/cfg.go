@@ -13,11 +13,28 @@ var cfgName = ".omnienv.yaml"
 
 var errCfgNotFound = errors.New("Config not found")
 
+type System struct {
+	Name string
+}
+
+func NewSystem(val string) System {
+	return System{val}
+}
+
+func (sys *System) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var str string
+	if err := unmarshal(&str); err != nil {
+		return err
+	}
+	*sys = NewSystem(str)
+	return nil
+}
+
 type Config struct {
 	// System indicates what distribution and version to base this upon.
 	// Specifying distribution not yet implemented.
 	// When distribution is omitted, Ubuntu is used.
-	System string
+	System System
 	// Label is set to the basename of RootDir by default, or may be
 	// overwritten with the supplied value.  Used as part of the name of
 	// the instance, along with System.
@@ -104,8 +121,8 @@ func loadConfig(path string) (Config, error) {
 		cfg.Label = filepath.Base(cfg.RootDir)
 	}
 
-	if cfg.System == "" {
-		cfg.System = os.Getenv("DEFAULT_SERIES")
+	if cfg.System.Name == "" {
+		cfg.System = NewSystem(os.Getenv("DEFAULT_SERIES"))
 	}
 
 	if cfg.Virtualization == "" {

@@ -15,17 +15,17 @@ var nameTests = []struct {
 	name   string
 }{{
 	summary: "basic name",
-	config:  Config{Label: "l", System: "s"},
+	config:  Config{Label: "l", System: NewSystem("s")},
 	system:  "s",
 	name:    "l-s",
 }, {
 	summary: "foo-bar",
-	config:  Config{Label: "foo", System: "bar"},
+	config:  Config{Label: "foo", System: NewSystem("bar")},
 	system:  "bar",
 	name:    "foo-bar",
 }, {
 	summary: "opts override",
-	config:  Config{Label: "l", System: "sys-from-config"},
+	config:  Config{Label: "l", System: NewSystem("sys-from-config")},
 	opts:    Opts{System: "sys-from-opts"},
 	system:  "sys-from-opts",
 	name:    "l-sys-from-opts",
@@ -61,7 +61,7 @@ var suCanPtyTests = []struct {
 func TestCanUseSuPty(t *testing.T) {
 	for _, test := range suCanPtyTests {
 		app := App{
-			Config{System: test.system},
+			Config{System: NewSystem(test.system)},
 			Opts{System: test.optsSystem},
 		}
 		assert.Equal(t, test.result, app.suCanPty())

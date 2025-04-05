@@ -14,11 +14,11 @@ var cfgTests = []struct {
 	vm bool
 }{{
 	summary: "basic name",
-	config:  Config{Label: "l", System: "s"},
+	config:  Config{Label: "l", System: NewSystem("s")},
 	vm:      false,
 }, {
 	summary: "vm",
-	config:  Config{Label: "foo", System: "bar", Virtualization: "vm"},
+	config:  Config{Label: "foo", System: NewSystem("bar"), Virtualization: "vm"},
 	vm:      true,
 }}
 
@@ -67,7 +67,7 @@ var loadCfgTests = []struct {
 	summary: "system",
 	data:    "system: plucky",
 	config: Config{
-		System:         "plucky",
+		System:         NewSystem("plucky"),
 		Virtualization: "container",
 	},
 }, {
@@ -77,7 +77,7 @@ system: warty
 label: ubiquity
 `,
 	config: Config{
-		System:         "warty",
+		System:         NewSystem("warty"),
 		Label:          "ubiquity",
 		Virtualization: "container",
 	},
@@ -85,7 +85,7 @@ label: ubiquity
 	summary: "system environ / lxd / default virt",
 	data:    "backend: lxd",
 	config: Config{
-		System:         "zesty",
+		System:         NewSystem("zesty"),
 		Backend:        "lxd",
 		Virtualization: "container",
 	},
@@ -96,7 +96,7 @@ backend: lxd
 virtualization: vm
 `,
 	config: Config{
-		System:         "zesty",
+		System:         NewSystem("zesty"),
 		Backend:        "lxd",
 		Virtualization: "vm",
 	},
@@ -105,7 +105,7 @@ virtualization: vm
 	data:    "project: proj",
 	config: Config{
 		Project:        "proj",
-		System:         "zesty",
+		System:         NewSystem("zesty"),
 		Virtualization: "container",
 	},
 	warn: `msg="unsupported key"`,
@@ -114,10 +114,27 @@ virtualization: vm
 	data:    "series: warty",
 	config: Config{
 		Series:         "warty",
-		System:         "zesty",
+		System:         NewSystem("zesty"),
 		Virtualization: "container",
 	},
 	warn: `msg="unsupported key"`,
+	//	}, {
+	//		summary: "manual remote for image",
+	//		data: `
+	//
+	// series:
+	//
+	//	jammy:
+	//	    image: ubuntu:j
+	//
+	// `,
+	//
+	//	config: Config{
+	//		Series:         "Jammy",
+	//		image:          "ubuntu:j",
+	//		Virtualization: "container",
+	//	},
+	//	warn: `msg="unsupported key"`,
 }}
 
 func TestLoadCfg(t *testing.T) {
@@ -182,7 +199,7 @@ func TestGetConfig(t *testing.T) {
 	assert.Nil(t, os.WriteFile(filename, data, 0644))
 	actual, err := GetConfig()
 	assert.Nil(t, err)
-	assert.Equal(t, "warty", actual.System)
+	assert.Equal(t, "warty", actual.System.Name)
 }
 
 func TestNotGetConfig(t *testing.T) {
