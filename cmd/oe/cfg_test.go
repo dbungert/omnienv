@@ -118,23 +118,18 @@ virtualization: vm
 		Virtualization: "container",
 	},
 	warn: `msg="unsupported key"`,
-	//	}, {
-	//		summary: "manual remote for image",
-	//		data: `
-	//
-	// series:
-	//
-	//	jammy:
-	//	    image: ubuntu:j
-	//
-	// `,
-	//
-	//	config: Config{
-	//		Series:         "Jammy",
-	//		image:          "ubuntu:j",
-	//		Virtualization: "container",
-	//	},
-	//	warn: `msg="unsupported key"`,
+}, {
+	summary: "manual remote for image",
+	data: `
+system:
+    jammy:
+        image: ubuntu:j
+`,
+
+	config: Config{
+		System:         System{"jammy", "ubuntu:j"},
+		Virtualization: "container",
+	},
 }}
 
 func TestLoadCfg(t *testing.T) {

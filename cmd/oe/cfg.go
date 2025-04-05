@@ -14,20 +14,38 @@ var cfgName = ".omnienv.yaml"
 var errCfgNotFound = errors.New("Config not found")
 
 type System struct {
-	Name string
+	Name  string
+	Image string
 }
 
 func NewSystem(val string) System {
-	return System{val}
+	return System{Name: val}
 }
 
 func (sys *System) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var str string
-	if err := unmarshal(&str); err != nil {
-		return err
+	// if string, unmarshal to Name and done
+	var err error
+	var name string
+
+	if err = unmarshal(&name); err == nil {
+		*sys = NewSystem(name)
+		return nil
 	}
-	*sys = NewSystem(str)
-	return nil
+
+	type image struct {
+		Image string
+	}
+
+	// if map with single key, unmarshal key to Name and set Image
+	var dict map[string]image
+	if err = unmarshal(&dict); err == nil {
+		for name, img := range dict {
+			*sys = System{Name: name, Image: img.Image}
+		}
+		return nil
+	}
+
+	return err
 }
 
 type Config struct {
