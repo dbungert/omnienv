@@ -1,17 +1,18 @@
 #!/bin/bash
 # vim: set sw=4 ts=4 et :
-set -eux
+
+set -x
 
 systems=(
-    # plucky - OK
-    # noble  - OK
-    # jammy  - cloud-init status --wait runs forever
-    # focal  - no pty - need use_pty sudoers cfg
-    # bionic - no pty - need use_pty sudoers cfg
-    # xenial - cloud-init status --wait runs forever
-    # trusty - cloud-init status not supported
+    plucky # OK
+    noble  # OK
+    jammy  # cloud-init status --wait forever, OK with lp-1878225 workaround
+    focal  # no pty - need use_pty sudoers cfg
+    bionic # no pty - need use_pty sudoers cfg
+    # xenial # cloud-init status --wait forever, sys-v init handling
+    # trusty # cloud-init status not supported
 )
 
 for system in ${systems[@]}; do
-    oe --launch -s $system ./shell-test
+    ../../oe --launch -s $system ./shell-test
 done

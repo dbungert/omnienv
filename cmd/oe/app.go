@@ -142,6 +142,70 @@ func (app App) wait() error {
 	}
 }
 
+func (app App) lxcRun(args ...string) error {
+	cmd := append([]string{"lxc", "exec", app.name(), "--"}, args...)
+	if err := run(cmd...); err != nil {
+		return fmt.Errorf("cmd %v failure: %w", cmd, err)
+	}
+	return nil
+}
+
+func (app App) lp1878225Quirk() error {
+	// LP: #1878225 - cloud-init status --wait appears to never resolve, as
+	// other things earlier in the chain aren't finalized.  Per the LP,
+	// there are problems having snapd seeded complete, and this is
+	// apparently severe enough to trigger no longer seeding lxd as a snap
+	// in subsequent releases.  Only Jammy appears affected among the
+	// tested images.
+
+	script := `
+	command -v lsb_release || exit 0
+	[ "$(lsb_release -i -s)" = "Ubuntu" ] || exit 0
+	[ "$(lsb_release -r -s)" = "22.04" ] || exit 0
+	exit 225
+	`
+	args := []string{"lxc", "exec", app.name(), "--", "sh", "-c", script}
+	slog.Debug("run", "command", args)
+	cmd := command(args[0], args[1:]...)
+	err := cmd.Run()
+	if err == nil {
+		slog.Debug("skipping LP: #1878225 quirk")
+		return nil
+	}
+
+	exitError, ok := err.(*exec.ExitError)
+	if !ok {
+		return err
+	}
+
+	if ec := exitError.ExitCode(); ec != 225 {
+		return fmt.Errorf("strange exit code %d", ec)
+	}
+
+	// often systemctl fails here due to the socket not being up yet,
+	// so wait for that first
+	script = `
+	for i in $(seq 10); do
+	    if [ -e /run/dbus/system_bus_socket ]; then
+	        exit 0
+	    fi
+	    sleep 1
+	done
+	[ -e /run/dbus/system_bus_socket ]
+	`
+
+	if err := app.lxcRun("sh", "-c", script); err != nil {
+		return fmt.Errorf("bus wait failure: %w", err)
+	}
+
+	// the actual workaround
+	if err := app.lxcRun("systemctl", "stop", "snapd.seeded.service"); err != nil {
+		return fmt.Errorf("seeded stop failure: %w", err)
+	}
+
+	return nil
+}
+
 func (app App) launch() error {
 	args := []string{"lxc", "launch", app.launchImage(), app.name()}
 	if app.Config.IsVM() {
@@ -161,11 +225,11 @@ func (app App) launch() error {
 		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
-	cloud_init := []string{
-		"lxc", "exec", app.name(), "--",
-		"cloud-init", "status", "--wait",
+	if err := app.lp1878225Quirk(); err != nil {
+		return fmt.Errorf("LP #1878225 workaround failure: %w", err)
 	}
-	if err := run(cloud_init...); err != nil {
+
+	if err := app.lxcRun("cloud-init", "status", "--wait"); err != nil {
 		return fmt.Errorf("cloud-init failure: %w", err)
 	}
 	return nil

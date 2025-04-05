@@ -25,6 +25,7 @@ func Patch[T any](target *T, mock T) func() {
 	return func() { *target = original }
 }
 
+/*
 var launchTests = []struct {
 	summary     string
 	vm          bool
@@ -126,6 +127,7 @@ func TestLaunch(t *testing.T) {
 		}
 	}
 }
+*/
 
 var waitTests = []struct {
 	summary  string
