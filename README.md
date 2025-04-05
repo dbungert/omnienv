@@ -65,10 +65,6 @@ These fields are supported:
 
 * The config file format is under active work, and I don't like some of the
   terms used just yet.
-* Support expected for Ubuntu based on version numbers, lxd remotes other than
-  ubuntu-daily, and other Linux distributions handled by the lxd `images`
-  remote.
-* Shell pty in-environment depends on sudo, but older versions of sudo do not
-  set `use_pty` by default.
-* Some ubuntu versions do not launch correctly today, related to an old copy of
-  cloud-init or other issues.
+* Support expected for Ubuntu based on version numbers, and other Linux
+  distributions handled by the lxd `images` remote.
+* Ubuntu pre-bionic doesn't launch correctly today.
