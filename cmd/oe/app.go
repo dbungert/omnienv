@@ -225,6 +225,13 @@ func (app App) launch() error {
 		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
+	use_pty := []string{
+		"sh", "-c", "echo 'Defaults use_pty' > /etc/sudoers.d/use_pty",
+	}
+	if err := app.lxcRun(use_pty...); err != nil {
+		return fmt.Errorf("use_pty setup failure: %w", err)
+	}
+
 	if err := app.lp1878225Quirk(); err != nil {
 		return fmt.Errorf("LP #1878225 workaround failure: %w", err)
 	}
