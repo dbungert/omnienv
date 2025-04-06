@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
-	"strconv"
 	"time"
 
 	"al.essio.dev/pkg/shellescape"
@@ -17,21 +16,6 @@ import (
 type App struct {
 	Config Config
 	Opts   Opts
-}
-
-func (app App) suCanPty() bool {
-	floatVal, err := strconv.ParseFloat(app.system(), 64)
-	if err == nil {
-		// jammy (22.04 is fine)
-		return floatVal > 22.039
-	}
-
-	switch app.system() {
-	case "jammy", "noble", "plucky":
-		return true
-	default:
-		return false
-	}
 }
 
 func (app App) launchImage() string {
