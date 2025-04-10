@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -eu
+
+remote=origin
+tagname="$1"
+
+existing=$(git tag -l $tagname)
+
+if [ -n "$existing" ]; then
+    echo "tag $tagname already exists"
+    echo "consider:"
+    echo "git tag -d $tagname"
+    echo "git push --delete $remote $tagname"
+    exit 1
+fi
+
+git tag -s -a $tagname -m "Releasing omnienv version $tagname"
+echo "consider:"
+echo "git push $remote $tagname"
