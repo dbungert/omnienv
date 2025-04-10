@@ -44,6 +44,8 @@ system: noble
 4. Standard lxd management commands can be used with the container.  For
    instance, this container can be deleted with `lxc delete foo-noble`, where
    `foo` is the basename of the directory containing `.omnienv.yaml`.
+5. Return to this same instance later by running `oe` from the directory with
+   `.omnienv.yaml` or lower.
 
 ## config file format
 
