@@ -216,3 +216,41 @@ func TestNotGetConfig(t *testing.T) {
 	_, err = GetConfig()
 	assert.Equal(t, errCfgNotFound, err)
 }
+
+func TestLXDLaunchConfigHomeAndWorkdir(t *testing.T) {
+	restoreHome := patchEnv("HOME", "/tmp/a")
+	defer restoreHome()
+
+	cfg := Config{RootDir: "/tmp/b"}
+	expected := `
+devices:
+  home:
+    type: disk
+    readonly: true
+    shift: true
+    path: /tmp/a
+    source: /tmp/a
+  workdir:
+    type: disk
+    readonly: false
+    shift: true
+    path: /tmp/b
+    source: /tmp/b`
+	assert.Equal(t, expected, cfg.LXDLaunchConfig())
+}
+
+func TestLXDLaunchConfigWorkdirOnly(t *testing.T) {
+	restoreHome := patchEnv("HOME", "/tmp/b")
+	defer restoreHome()
+
+	cfg := Config{RootDir: "/tmp/b"}
+	expected := `
+devices:
+  workdir:
+    type: disk
+    readonly: false
+    shift: true
+    path: /tmp/b
+    source: /tmp/b`
+	assert.Equal(t, expected, cfg.LXDLaunchConfig())
+}
