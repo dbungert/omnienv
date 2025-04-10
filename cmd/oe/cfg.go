@@ -89,9 +89,18 @@ func (cfg Config) LXDLaunchConfig() string {
 	tmap := map[string]string{
 		"WORKDIR": cfg.RootDir,
 		"HOME":    home,
+		"USER":    os.Getenv("USER"),
 	}
 
 	template := `
+config:
+  user.vendor-data: |
+    #cloud-config
+    users:
+      - name: ${USER}
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        groups: users,admin
+        shell: /bin/bash
 devices:`
 	if cfg.RootDir != home {
 		template += `

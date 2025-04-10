@@ -221,8 +221,19 @@ func TestLXDLaunchConfigHomeAndWorkdir(t *testing.T) {
 	restoreHome := patchEnv("HOME", "/tmp/a")
 	defer restoreHome()
 
+	restoreUser := patchEnv("USER", "jimbob")
+	defer restoreUser()
+
 	cfg := Config{RootDir: "/tmp/b"}
 	expected := `
+config:
+  user.vendor-data: |
+    #cloud-config
+    users:
+      - name: jimbob
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        groups: users,admin
+        shell: /bin/bash
 devices:
   home:
     type: disk
@@ -243,8 +254,19 @@ func TestLXDLaunchConfigWorkdirOnly(t *testing.T) {
 	restoreHome := patchEnv("HOME", "/tmp/b")
 	defer restoreHome()
 
+	restoreUser := patchEnv("USER", "jimbob")
+	defer restoreUser()
+
 	cfg := Config{RootDir: "/tmp/b"}
 	expected := `
+config:
+  user.vendor-data: |
+    #cloud-config
+    users:
+      - name: jimbob
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        groups: users,admin
+        shell: /bin/bash
 devices:
   workdir:
     type: disk
