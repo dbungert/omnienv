@@ -11,42 +11,34 @@ var argsTests = []struct {
 	argsInput []string
 
 	opts Opts
-	err  error
 }{{
 	summary:   "one arg",
 	argsInput: []string{"asdf"},
 	opts:      Opts{Params: []string{"asdf"}},
-	err:       nil,
 }, {
 	summary:   "launch",
 	argsInput: []string{"--launch"},
 	opts:      Opts{Launch: true},
-	err:       nil,
 }, {
 	summary:   "verbose",
 	argsInput: []string{"--verbose"},
 	opts:      Opts{Verbose: true},
-	err:       nil,
 }, {
 	summary:   "v",
 	argsInput: []string{"-v"},
 	opts:      Opts{Verbose: true},
-	err:       nil,
 }, {
 	summary:   "system",
 	argsInput: []string{"--system", "foo"},
 	opts:      Opts{System: "foo"},
-	err:       nil,
 }, {
 	summary:   "system + param",
 	argsInput: []string{"--system", "foo", "bar"},
 	opts:      Opts{System: "foo", Params: []string{"bar"}},
-	err:       nil,
 }, {
 	summary:   "version",
 	argsInput: []string{"--version"},
 	opts:      Opts{Version: true},
-	err:       nil,
 }}
 
 func TestArgs(t *testing.T) {
@@ -58,7 +50,7 @@ func TestArgs(t *testing.T) {
 		}
 
 		opts, err := GetOpts(test.argsInput)
-		assert.Equal(t, test.err, err, test.summary)
+		assert.Nil(t, err, test.summary)
 		assert.Equal(t, test.opts, opts, test.summary)
 	}
 }
