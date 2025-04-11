@@ -42,6 +42,11 @@ var argsTests = []struct {
 	argsInput: []string{"--system", "foo", "bar"},
 	opts:      Opts{System: "foo", Params: []string{"bar"}},
 	err:       nil,
+}, {
+	summary:   "version",
+	argsInput: []string{"--version"},
+	opts:      Opts{Version: true},
+	err:       nil,
 }}
 
 func TestArgs(t *testing.T) {

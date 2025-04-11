@@ -8,6 +8,7 @@ type Opts struct {
 	Launch  bool   `long:"launch" description:"create environment"`
 	Verbose bool   `long:"verbose" short:"v"`
 	System  string `long:"system" short:"s"`
+	Version bool   `long:"version"`
 	Params  []string
 }
 

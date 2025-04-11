@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
 )
@@ -24,6 +25,11 @@ func main() {
 	opts, err := GetOpts(os.Args[1:])
 	if err != nil {
 		return
+	}
+
+	if opts.Version {
+		fmt.Println("0.1.0")
+		os.Exit(0)
 	}
 
 	setupLogging(opts)
