@@ -102,7 +102,7 @@ func (app App) wait() error {
 		return nil
 	}
 
-	fmt.Print("Waiting.")
+	fmt.Print("Waiting")
 	for {
 		err := runDevNull(
 			"lxc", "exec", app.name(), "--", "/bin/true",
@@ -120,8 +120,8 @@ func (app App) wait() error {
 		if ec := exitError.ExitCode(); ec != 255 {
 			return fmt.Errorf("strange exit code %d", ec)
 		} else {
-			fmt.Print(".")
 			timeSleep(time.Second)
+			fmt.Print(".")
 		}
 	}
 }
