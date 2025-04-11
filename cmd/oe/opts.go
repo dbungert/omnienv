@@ -5,9 +5,9 @@ import (
 )
 
 type Opts struct {
-	Launch  bool   `long:"launch" description:"create environment"`
-	Verbose bool   `long:"verbose" short:"v"`
-	System  string `long:"system" short:"s"`
+	Launch  bool   `long:"launch"            description:"Create environment"`
+	System  string `long:"system"  short:"s" description:"Override system value"`
+	Verbose bool   `long:"verbose" short:"v" description:"Increase logging verbosity"`
 	Version bool   `long:"version"`
 	Params  []string
 }
