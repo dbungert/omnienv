@@ -16,19 +16,19 @@ var nameTests = []struct {
 	launchImage string
 }{{
 	summary:     "basic name",
-	config:      Config{Label: "l", System: NewSystem("s")},
+	config:      Config{Label: "l", Systems: []System{NewSystem("s")}},
 	system:      "s",
 	name:        "l-s",
 	launchImage: "ubuntu-daily:s",
 }, {
 	summary:     "foo-bar",
-	config:      Config{Label: "foo", System: NewSystem("bar")},
+	config:      Config{Label: "foo", Systems: []System{NewSystem("bar")}},
 	system:      "bar",
 	name:        "foo-bar",
 	launchImage: "ubuntu-daily:bar",
 }, {
 	summary:     "opts override",
-	config:      Config{Label: "l", System: NewSystem("sys-from-config")},
+	config:      Config{Label: "l", Systems: []System{NewSystem("sys-from-config")}},
 	opts:        Opts{System: "sys-from-opts"},
 	system:      "sys-from-opts",
 	name:        "l-sys-from-opts",

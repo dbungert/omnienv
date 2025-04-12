@@ -22,14 +22,14 @@ func (app App) launchImage() string {
 	if app.Opts.System != "" {
 		return NewSystem(app.Opts.System).LaunchImage()
 	}
-	return app.Config.System.LaunchImage()
+	return app.Config.Systems[0].LaunchImage()
 }
 
 func (app App) system() string {
 	if app.Opts.System != "" {
 		return app.Opts.System
 	}
-	return app.Config.System.Name
+	return app.Config.Systems[0].Name
 }
 
 func (app App) name() string {

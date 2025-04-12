@@ -14,11 +14,11 @@ var cfgTests = []struct {
 	vm bool
 }{{
 	summary: "basic name",
-	config:  Config{Label: "l", System: NewSystem("s")},
+	config:  Config{Label: "l", Systems: []System{NewSystem("s")}},
 	vm:      false,
 }, {
 	summary: "vm",
-	config:  Config{Label: "foo", System: NewSystem("bar"), Virtualization: "vm"},
+	config:  Config{Label: "foo", Systems: []System{NewSystem("bar")}, Virtualization: "vm"},
 	vm:      true,
 }}
 

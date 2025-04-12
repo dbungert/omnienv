@@ -16,7 +16,7 @@ import (
 )
 
 func mockApp() App {
-	return App{Config: Config{Label: "l", System: NewSystem("s")}}
+	return App{Config: Config{Label: "l", Systems: []System{NewSystem("s")}}}
 }
 
 func Patch[T any](target *T, mock T) func() {
@@ -284,14 +284,15 @@ func TestLxcExec(t *testing.T) {
 	restoreSE := Patch(&syscallExec, func(argv0 string, argv []string, envv []string) (err error) {
 		assert.Equal(t, argv0, "/foo/lxc")
 		assert.Equal(t, argv, []string{
-			"/foo/lxc", "exec", "-", "--",
+			"/foo/lxc", "exec", "l-s", "--",
 			"sudo", "--login", "--user", "user",
 			"sh", "-c", "bar",
 		})
 		return nil
 	})
 	defer restoreSE()
-	assert.Nil(t, App{}.lxcExec("bar"))
+
+	assert.Nil(t, mockApp().lxcExec("bar"))
 }
 
 func TestLxcExecFailedLookup(t *testing.T) {
