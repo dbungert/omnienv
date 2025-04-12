@@ -65,20 +65,20 @@ var loadCfgTests = []struct {
 	warn   string
 	image  string
 }{{
-	summary: "system",
-	data:    "system: plucky",
+	summary: "systems",
+	data:    "systems: [plucky]",
 	config: Config{
-		System:         NewSystem("plucky"),
+		Systems:        []System{NewSystem("plucky")},
 		Virtualization: "container",
 	},
 }, {
 	summary: "system / label",
 	data: `
-system: warty
+systems: [warty]
 label: ubiquity
 `,
 	config: Config{
-		System:         NewSystem("warty"),
+		Systems:        []System{NewSystem("warty")},
 		Label:          "ubiquity",
 		Virtualization: "container",
 	},
@@ -86,7 +86,7 @@ label: ubiquity
 	summary: "system environ / lxd / default virt",
 	data:    "backend: lxd",
 	config: Config{
-		System:         NewSystem("zesty"),
+		Systems:        []System{NewSystem("zesty")},
 		Backend:        "lxd",
 		Virtualization: "container",
 	},
@@ -97,7 +97,7 @@ backend: lxd
 virtualization: vm
 `,
 	config: Config{
-		System:         NewSystem("zesty"),
+		Systems:        []System{NewSystem("zesty")},
 		Backend:        "lxd",
 		Virtualization: "vm",
 	},
@@ -107,7 +107,7 @@ virtualization: vm
 	data:    "project: proj",
 	config: Config{
 		Project:        "proj",
-		System:         NewSystem("zesty"),
+		Systems:        []System{NewSystem("zesty")},
 		Virtualization: "container",
 	},
 	warn: `msg="unsupported key"`,
@@ -116,20 +116,20 @@ virtualization: vm
 	data:    "series: warty",
 	config: Config{
 		Series:         "warty",
-		System:         NewSystem("zesty"),
+		Systems:        []System{NewSystem("zesty")},
 		Virtualization: "container",
 	},
 	warn: `msg="unsupported key"`,
 }, {
 	summary: "manual remote for image",
 	data: `
-system:
-    jammy:
+systems:
+    - jammy:
         image: ubuntu:j
 `,
 
 	config: Config{
-		System:         System{"jammy", "ubuntu:j"},
+		Systems:        []System{System{"jammy", "ubuntu:j"}},
 		Virtualization: "container",
 	},
 	image: "ubuntu:j",
@@ -167,8 +167,8 @@ func TestLoadCfg(t *testing.T) {
 
 		if test.image != "" {
 			assert.Equal(
-				t, test.config.System.LaunchImage(), test.image,
-				test.summary,
+				t, test.config.Systems[0].LaunchImage(),
+				test.image, test.summary,
 			)
 		}
 	}

@@ -56,10 +56,10 @@ func (sys *System) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 type Config struct {
-	// System indicates what distribution and version to base this upon.
+	// Systems indicates what distributions and versions to base this upon.
 	// Specifying distribution not yet implemented.
 	// When distribution is omitted, Ubuntu is used.
-	System System
+	Systems []System
 	// Label is set to the basename of RootDir by default, or may be
 	// overwritten with the supplied value.  Used as part of the name of
 	// the instance, along with System.
@@ -75,6 +75,7 @@ type Config struct {
 	Virtualization string
 
 	// unsupported keys that are unmarshalled for warning purposes
+	System  System
 	Project string
 	Series  string
 }
@@ -162,14 +163,17 @@ func loadConfig(path string) (Config, error) {
 		cfg.Label = filepath.Base(cfg.RootDir)
 	}
 
-	if cfg.System.Name == "" {
-		cfg.System = NewSystem(os.Getenv("DEFAULT_SERIES"))
-	}
-
 	if cfg.Virtualization == "" {
 		cfg.Virtualization = "container"
 	}
 
+	if len(cfg.Systems) == 0 {
+		cfg.Systems = []System{NewSystem(os.Getenv("DEFAULT_SERIES"))}
+	}
+
+	if cfg.System.Name == "" {
+		slog.Warn("unsupported key", "system", cfg.Project)
+	}
 	if cfg.Project != "" {
 		slog.Warn("unsupported key", "project", cfg.Project)
 	}
