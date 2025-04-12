@@ -14,7 +14,14 @@ type Opts struct {
 
 func GetOpts(args []string) (Opts, error) {
 	opts := Opts{}
-	params, err := flags.ParseArgs(&opts, args)
+
+	parser := flags.NewParser(
+		&opts,
+		flags.HelpFlag|flags.PrintErrors|flags.PassDoubleDash|flags.PassAfterNonOption,
+	)
+	parser.Usage = "[OPTIONS]"
+
+	params, err := parser.ParseArgs(args)
 	if err != nil {
 		return Opts{}, err
 	}

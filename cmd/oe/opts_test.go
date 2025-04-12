@@ -39,6 +39,14 @@ var argsTests = []struct {
 	summary:   "version",
 	argsInput: []string{"--version"},
 	opts:      Opts{Version: true},
+}, {
+	summary:   "pass after unrecognized",
+	argsInput: []string{"bash", "--help"},
+	opts:      Opts{Params: []string{"bash", "--help"}},
+}, {
+	summary:   "pass after double dash",
+	argsInput: []string{"--", "bash", "--help"},
+	opts:      Opts{Params: []string{"bash", "--help"}},
 }}
 
 func TestArgs(t *testing.T) {
