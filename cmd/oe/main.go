@@ -33,7 +33,7 @@ func main() {
 		if bi, ok := debug.ReadBuildInfo(); ok {
 			ver = bi.Main.Version
 		}
-		fmt.Printf("oe version: %v\n", ver)
+		fmt.Printf("omnienv version: %v\n", ver)
 		os.Exit(0)
 	}
 
