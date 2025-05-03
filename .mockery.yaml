@@ -1,8 +1,0 @@
-with-expecter: False
-issue-845-fix: True
-outpkg: mocks
-dir: mocks
-packages:
-  github.com/canonical/lxd/client:
-    interfaces:
-      Operation: {}
