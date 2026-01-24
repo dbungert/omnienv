@@ -84,12 +84,11 @@ func (cfg Config) IsVM() bool {
 }
 
 func (cfg Config) LXDLaunchConfig() string {
-	home := "/home/user"
+	home := os.Getenv("HOME")
 
 	tmap := map[string]string{
 		"WORKDIR": cfg.RootDir,
 		"HOME":    home,
-		"USER":    "user",
 	}
 
 	template := `
@@ -97,26 +96,26 @@ config:
   user.vendor-data: |
     #cloud-config
     users:
-      - name: ${USER}
+      - name: user
         sudo: ALL=(ALL) NOPASSWD:ALL
         groups: users,admin
         shell: /bin/bash
 devices:`
-	if cfg.RootDir != home {
-		template += `
-  home:
-    type: disk
-    readonly: true
-    shift: true
-    path: ${HOME}
-    source: ${HOME}`
-	}
+	// if cfg.RootDir != home {
+	// 	template += `
+	// home:
+	// type: disk
+	// readonly: true
+	// shift: true
+	// path: /home/user
+	// source: ${HOME}`
+	// }
 	template += `
   workdir:
     type: disk
     readonly: false
     shift: true
-    path: ${WORKDIR}
+    path: /project
     source: ${WORKDIR}`
 	return os.Expand(template, func(key string) string {
 		return tmap[key]
