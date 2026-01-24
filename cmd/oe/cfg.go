@@ -114,7 +114,7 @@ devices:`
   workdir:
     type: disk
     readonly: false
-    shift: true
+    shift: false
     path: /project
     source: ${WORKDIR}`
 	return os.Expand(template, func(key string) string {

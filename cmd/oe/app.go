@@ -258,7 +258,9 @@ func (app App) shell() error {
 	}
 
 	// in instance, change to the directory we are in right now
-	script := fmt.Sprintf(`cd "%s" && exec $SHELL`, os.Getenv("PWD"))
+	// script := fmt.Sprintf(`cd "%s" && exec $SHELL`, os.Getenv("PWD"))
+	// FIXME take curdir, make it relative to /project, cd to that
+	script := fmt.Sprintf(`cd "%s" && exec $SHELL`, "/project")
 	if len(app.Opts.Params) > 0 {
 		// run shell with the command we were given
 		script = fmt.Sprintf(
