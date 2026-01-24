@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"al.essio.dev/pkg/shellescape"
@@ -199,7 +200,8 @@ func (app App) launch() error {
 	cmd := command(args[0], args[1:]...)
 	slog.Debug("run", "command", args)
 	cmd.Stdout = os.Stdout
-	cmd.Stdin = bytes.NewReader([]byte(app.Config.LXDLaunchConfig()))
+	user := CurrentUserInfo()
+	cmd.Stdin = bytes.NewReader([]byte(app.Config.LXDLaunchConfig(user)))
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to create instance: %w", err)
@@ -257,8 +259,15 @@ func (app App) shell() error {
 		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
-	// in instance, change to the directory we are in right now
-	script := fmt.Sprintf(`cd "%s" && exec $SHELL`, os.Getenv("PWD"))
+	// look at pwd to determine where we are relative to RootDir, then
+	// adjust that subdirectory against /project, and cd to that
+	dest := "/project"
+	after, found := strings.CutPrefix(os.Getenv("PWD"), app.Config.RootDir)
+	if found {
+		dest = fmt.Sprintf("%s%s", dest, after)
+	}
+
+	script := fmt.Sprintf(`cd "%s" && exec $SHELL`, dest)
 	if len(app.Opts.Params) > 0 {
 		// run shell with the command we were given
 		script = fmt.Sprintf(

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"gopkg.in/yaml.v2"
 )
@@ -83,41 +84,33 @@ func (cfg Config) IsVM() bool {
 	return cfg.Virtualization == "vm"
 }
 
-func (cfg Config) LXDLaunchConfig() string {
-	home := "/home/user"
-
+func (cfg Config) LXDLaunchConfig(user UserInfo) string {
 	tmap := map[string]string{
-		"WORKDIR": cfg.RootDir,
-		"HOME":    home,
-		"USER":    "user",
+		"WORKDIR":  cfg.RootDir,
+		"HOST_UID": strconv.Itoa(user.uid),
+		"HOST_GID": strconv.Itoa(user.gid),
 	}
 
 	template := `
 config:
+  raw.idmap: |-
+    uid ${HOST_UID} 1000
+    gid ${HOST_GID} 1000
   user.vendor-data: |
     #cloud-config
     users:
-      - name: ${USER}
+      - name: user
         sudo: ALL=(ALL) NOPASSWD:ALL
         groups: users,admin
         shell: /bin/bash
-devices:`
-	if cfg.RootDir != home {
-		template += `
-  home:
-    type: disk
-    readonly: true
-    shift: true
-    path: ${HOME}
-    source: ${HOME}`
-	}
-	template += `
+devices:
   workdir:
     type: disk
     readonly: false
-    shift: true
-    path: ${WORKDIR}
-    source: ${WORKDIR}`
+    shift: false
+    path: /project
+    source: ${WORKDIR}
+`
 	return os.Expand(template, func(key string) string {
 		return tmap[key]
 	})

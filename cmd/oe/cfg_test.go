@@ -217,49 +217,13 @@ func TestNotGetConfig(t *testing.T) {
 	assert.Equal(t, errCfgNotFound, err)
 }
 
-func TestLXDLaunchConfigHomeAndWorkdir(t *testing.T) {
-	restoreHome := patchEnv("HOME", "/tmp/a")
-	defer restoreHome()
-
-	restoreUser := patchEnv("USER", "jimbob")
-	defer restoreUser()
-
+func TestLXDLaunchConfigWorkdir(t *testing.T) {
 	cfg := Config{RootDir: "/tmp/b"}
 	expected := `
 config:
-  user.vendor-data: |
-    #cloud-config
-    users:
-      - name: user
-        sudo: ALL=(ALL) NOPASSWD:ALL
-        groups: users,admin
-        shell: /bin/bash
-devices:
-  home:
-    type: disk
-    readonly: true
-    shift: true
-    path: /home/user
-    source: /home/user
-  workdir:
-    type: disk
-    readonly: false
-    shift: true
-    path: /tmp/b
-    source: /tmp/b`
-	assert.Equal(t, expected, cfg.LXDLaunchConfig())
-}
-
-func TestLXDLaunchConfigWorkdirOnly(t *testing.T) {
-	restoreHome := patchEnv("HOME", "/home/user")
-	defer restoreHome()
-
-	restoreUser := patchEnv("USER", "jimbob")
-	defer restoreUser()
-
-	cfg := Config{RootDir: "/home/user"}
-	expected := `
-config:
+  raw.idmap: |-
+    uid 1234 1000
+    gid 5678 1000
   user.vendor-data: |
     #cloud-config
     users:
@@ -271,8 +235,10 @@ devices:
   workdir:
     type: disk
     readonly: false
-    shift: true
-    path: /home/user
-    source: /home/user`
-	assert.Equal(t, expected, cfg.LXDLaunchConfig())
+    shift: false
+    path: /project
+    source: /tmp/b
+`
+
+	assert.Equal(t, expected, cfg.LXDLaunchConfig(UserInfo{1234, 5678}))
 }
