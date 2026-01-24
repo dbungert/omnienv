@@ -230,7 +230,7 @@ config:
   user.vendor-data: |
     #cloud-config
     users:
-      - name: jimbob
+      - name: user
         sudo: ALL=(ALL) NOPASSWD:ALL
         groups: users,admin
         shell: /bin/bash
@@ -239,8 +239,8 @@ devices:
     type: disk
     readonly: true
     shift: true
-    path: /tmp/a
-    source: /tmp/a
+    path: /home/user
+    source: /home/user
   workdir:
     type: disk
     readonly: false
@@ -251,19 +251,19 @@ devices:
 }
 
 func TestLXDLaunchConfigWorkdirOnly(t *testing.T) {
-	restoreHome := patchEnv("HOME", "/tmp/b")
+	restoreHome := patchEnv("HOME", "/home/user")
 	defer restoreHome()
 
 	restoreUser := patchEnv("USER", "jimbob")
 	defer restoreUser()
 
-	cfg := Config{RootDir: "/tmp/b"}
+	cfg := Config{RootDir: "/home/user"}
 	expected := `
 config:
   user.vendor-data: |
     #cloud-config
     users:
-      - name: jimbob
+      - name: user
         sudo: ALL=(ALL) NOPASSWD:ALL
         groups: users,admin
         shell: /bin/bash
@@ -272,7 +272,7 @@ devices:
     type: disk
     readonly: false
     shift: true
-    path: /tmp/b
-    source: /tmp/b`
+    path: /home/user
+    source: /home/user`
 	assert.Equal(t, expected, cfg.LXDLaunchConfig())
 }

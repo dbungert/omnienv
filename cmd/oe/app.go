@@ -228,7 +228,7 @@ func (app App) launch() error {
 
 func (app App) sudoLogin(script string) []string {
 	return []string{
-		"sudo", "--login", "--user", os.Getenv("USER"),
+		"sudo", "--login", "--user", "user",
 		"sh", "-c", script,
 	}
 }

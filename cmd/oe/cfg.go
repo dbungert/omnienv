@@ -84,12 +84,12 @@ func (cfg Config) IsVM() bool {
 }
 
 func (cfg Config) LXDLaunchConfig() string {
-	home := os.Getenv("HOME")
+	home := "/home/user"
 
 	tmap := map[string]string{
 		"WORKDIR": cfg.RootDir,
 		"HOME":    home,
-		"USER":    os.Getenv("USER"),
+		"USER":    "user",
 	}
 
 	template := `
