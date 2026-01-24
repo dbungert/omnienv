@@ -51,7 +51,7 @@ func patchEnv(key string, mock string) func() {
 		if ok {
 			_ = os.Setenv(key, original)
 		} else {
-			os.Unsetenv(key)
+			_ = os.Unsetenv(key)
 		}
 	}
 }
