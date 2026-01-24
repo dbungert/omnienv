@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"gopkg.in/yaml.v2"
 )
@@ -87,12 +88,15 @@ func (cfg Config) LXDLaunchConfig() string {
 	home := os.Getenv("HOME")
 
 	tmap := map[string]string{
-		"WORKDIR": cfg.RootDir,
-		"HOME":    home,
+		"WORKDIR":  cfg.RootDir,
+		"HOME":     home,
+		"HOST_UID": strconv.Itoa(os.Getuid()),
+		// FIXME gid
 	}
 
 	template := `
 config:
+  raw.idmap: "both ${HOST_UID} 1000"
   user.vendor-data: |
     #cloud-config
     users:
@@ -116,7 +120,8 @@ devices:`
     readonly: false
     shift: false
     path: /project
-    source: ${WORKDIR}`
+    source: ${WORKDIR}
+`
 	return os.Expand(template, func(key string) string {
 		return tmap[key]
 	})
