@@ -217,51 +217,14 @@ func TestNotGetConfig(t *testing.T) {
 	assert.Equal(t, errCfgNotFound, err)
 }
 
-func TestLXDLaunchConfigHomeAndWorkdir(t *testing.T) {
-	t.Skip("FIXME broken")
-	restoreHome := patchEnv("HOME", "/tmp/a")
-	defer restoreHome()
-
-	restoreUser := patchEnv("USER", "jimbob")
-	defer restoreUser()
-
+func TestLXDLaunchConfigWorkdir(t *testing.T) {
 	cfg := Config{RootDir: "/tmp/b"}
+	// FIXME using unmocked host uid/gid
 	expected := `
 config:
-  user.vendor-data: |
-    #cloud-config
-    users:
-      - name: user
-        sudo: ALL=(ALL) NOPASSWD:ALL
-        groups: users,admin
-        shell: /bin/bash
-devices:
-  home:
-    type: disk
-    readonly: true
-    shift: true
-    path: /tmp/a
-    source: /home/user
-  workdir:
-    type: disk
-    readonly: false
-    shift: true
-    path: /tmp/b
-    source: /tmp/b`
-	assert.Equal(t, expected, cfg.LXDLaunchConfig())
-}
-
-func TestLXDLaunchConfigWorkdirOnly(t *testing.T) {
-	t.Skip("FIXME broken")
-	restoreHome := patchEnv("HOME", "/home/user")
-	defer restoreHome()
-
-	restoreUser := patchEnv("USER", "jimbob")
-	defer restoreUser()
-
-	cfg := Config{RootDir: "/home/user"}
-	expected := `
-config:
+  raw.idmap: |-
+    uid 1000 1000
+    gid 1000 1000
   user.vendor-data: |
     #cloud-config
     users:
@@ -273,8 +236,9 @@ devices:
   workdir:
     type: disk
     readonly: false
-    shift: true
-    path: /home/user
-    source: /home/user`
+    shift: false
+    path: /project
+    source: /tmp/b
+`
 	assert.Equal(t, expected, cfg.LXDLaunchConfig())
 }
