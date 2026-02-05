@@ -106,17 +106,7 @@ config:
         sudo: ALL=(ALL) NOPASSWD:ALL
         groups: users,admin
         shell: /bin/bash
-devices:`
-	// if cfg.RootDir != home {
-	// 	template += `
-	// home:
-	// type: disk
-	// readonly: true
-	// shift: true
-	// path: /home/user
-	// source: ${HOME}`
-	// }
-	template += `
+devices:
   workdir:
     type: disk
     readonly: false
