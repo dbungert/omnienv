@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"al.essio.dev/pkg/shellescape"
@@ -257,10 +258,15 @@ func (app App) shell() error {
 		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
-	// in instance, change to the directory we are in right now
-	// script := fmt.Sprintf(`cd "%s" && exec $SHELL`, os.Getenv("PWD"))
-	// FIXME take curdir, make it relative to /project, cd to that
-	script := fmt.Sprintf(`cd "%s" && exec $SHELL`, "/project")
+	// look at pwd to determine where we are relative to RootDir, then
+	// adjust that subdirectory against /project, and cd to that
+	dest := "/project"
+	after, found := strings.CutPrefix(os.Getenv("PWD"), app.Config.RootDir)
+	if found {
+		dest = fmt.Sprintf("%s%s", dest, after)
+	}
+
+	script := fmt.Sprintf(`cd "%s" && exec $SHELL`, dest)
 	if len(app.Opts.Params) > 0 {
 		// run shell with the command we were given
 		script = fmt.Sprintf(
