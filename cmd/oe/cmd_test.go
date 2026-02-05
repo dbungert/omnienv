@@ -304,19 +304,21 @@ func TestLxcExecFailedLookup(t *testing.T) {
 }
 
 var shellTests = []struct {
-	opts   Opts
-	script string
+	opts    Opts
+	rootDir string
+	script  string
 }{{
-	opts:   Opts{},
-	script: `cd "/tmp" && exec $SHELL`,
+	opts:    Opts{},
+	rootDir: "/home/user/src",
+	script:  `cd "/project/proj" && exec $SHELL`,
 }, {
-	opts:   Opts{Params: []string{"a"}},
-	script: `cd "/tmp" && exec $SHELL -c "a"`,
+	opts:    Opts{Params: []string{"a"}},
+	rootDir: "/home/user/src/proj",
+	script:  `cd "/project" && exec $SHELL -c "a"`,
 }}
 
 func TestShell(t *testing.T) {
-	t.Skip("FIXME broken")
-	restorePWD := patchEnv("PWD", "/tmp")
+	restorePWD := patchEnv("PWD", "/home/user/src/proj")
 	defer restorePWD()
 
 	restoreUser := patchEnv("USER", "user")
@@ -330,11 +332,14 @@ func TestShell(t *testing.T) {
 	for _, test := range shellTests {
 		restoreSE := Patch(&syscallExec, func(argv0 string, argv []string, envv []string) (err error) {
 			assert.Equal(t, argv0, "lxc")
-			assert.Equal(t, argv, []string{
-				"lxc", "exec", "l-s", "--",
-				"sudo", "--login", "--user", "user",
-				"sh", "-c", test.script,
-			})
+			assert.Equal(t,
+				[]string{
+					"lxc", "exec", "l-s", "--",
+					"sudo", "--login", "--user", "user",
+					"sh", "-c", test.script,
+				},
+				argv,
+			)
 			return nil
 		})
 		defer restoreSE()
@@ -347,6 +352,7 @@ func TestShell(t *testing.T) {
 		mis.On("GetInstance", "l-s").Return(&instance, "", nil)
 
 		app := mockApp()
+		app.Config.RootDir = test.rootDir
 		app.Opts = test.opts
 		assert.Nil(t, app.shell())
 	}
