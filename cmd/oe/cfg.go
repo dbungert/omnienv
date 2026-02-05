@@ -91,12 +91,14 @@ func (cfg Config) LXDLaunchConfig() string {
 		"WORKDIR":  cfg.RootDir,
 		"HOME":     home,
 		"HOST_UID": strconv.Itoa(os.Getuid()),
-		// FIXME gid
+		"HOST_GID": strconv.Itoa(os.Getgid()),
 	}
 
 	template := `
 config:
-  raw.idmap: "both ${HOST_UID} 1000"
+  raw.idmap: |-
+    uid ${HOST_UID} 1000
+    gid ${HOST_GID} 1000
   user.vendor-data: |
     #cloud-config
     users:
