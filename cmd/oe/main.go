@@ -22,6 +22,11 @@ func runDevNull(args ...string) error {
 	return cmd.Run()
 }
 
+func fatal(msg string, args ...any) {
+	slog.Error(msg, args...)
+	os.Exit(1)
+}
+
 func main() {
 	opts, err := GetOpts(os.Args[1:])
 	if err != nil {
@@ -42,18 +47,18 @@ func main() {
 
 	cfg, err := GetConfig()
 	if err != nil {
-		SlogFatal("fatal error", "error", err)
+		fatal("fatal error", "error", err)
 	}
 
 	app := App{Config: cfg, Opts: opts}
 
 	if opts.Launch {
 		if err := app.launch(); err != nil {
-			SlogFatal("failed to launch", "error", err)
+			fatal("failed to launch", "error", err)
 		}
 	}
 
 	if err := app.shell(); err != nil {
-		SlogFatal("failed to create shell", "error", err)
+		fatal("failed to create shell", "error", err)
 	}
 }
