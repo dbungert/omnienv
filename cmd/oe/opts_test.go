@@ -62,3 +62,8 @@ func TestArgs(t *testing.T) {
 		assert.Equal(t, test.opts, opts, test.summary)
 	}
 }
+
+func TestBadArgs(t *testing.T) {
+	_, err := GetOpts([]string{"--invalid"})
+	assert.NotNil(t, err)
+}
