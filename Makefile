@@ -16,6 +16,6 @@ pre-commit:
 .PHONY: oe test clean pre-commit
 
 gocovsh:
-	go test -v ./... -coverpkg=./... -coverprofile=.cover.out
-	gocovsh --profile .cover.out
-	rm .cover.out
+	go test -v ./... -coverpkg=./... -coverprofile=.coverprofile
+	gocovsh --profile .coverprofile
+	rm .coverprofile
