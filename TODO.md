@@ -34,7 +34,7 @@ Items from a code review of the current codebase, ordered by rough priority.
   branch succeeds with an empty map, `System` gets zero-valued silently. Multiple map
   keys also silently overwrite (last wins). Add validation.
 
-- [ ] **Fall back from `os.Getenv("PWD")` to `os.Getwd()`** (`app.go:265`). If the
+- [X] **Fall back from `os.Getenv("PWD")` to `os.Getwd()`** (`app.go:265`). If the
   shell doesn't set `PWD`, the subdirectory-relative `cd` silently falls through and
   `dest` stays `/project`. Log a warning or fall back to `os.Getwd()`.
 

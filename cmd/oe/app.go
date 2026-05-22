@@ -259,11 +259,14 @@ func (app App) shell() error {
 		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
-	// look at pwd to determine where we are relative to RootDir, then
-	// adjust that subdirectory against /project, and cd to that
+	// determine where we are relative to RootDir, then adjust that
+	// subdirectory against /project, and cd to that
 	dest := "/project"
-	after, found := strings.CutPrefix(os.Getenv("PWD"), app.Config.RootDir)
-	if found {
+	wd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("getting working directory: %w", err)
+	}
+	if after, found := strings.CutPrefix(wd, app.Config.RootDir); found {
 		dest = fmt.Sprintf("%s%s", dest, after)
 	}
 
