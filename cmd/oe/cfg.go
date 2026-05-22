@@ -137,7 +137,8 @@ func findConfig(dir string) (string, error) {
 }
 
 func loadConfig(path string) (Config, error) {
-	data, err := os.ReadFile(path)
+	// directory traversal is an intended feature
+	data, err := os.ReadFile(path) //gosec:disable G304
 	if err != nil {
 		return Config{}, err
 	}
