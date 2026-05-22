@@ -9,7 +9,7 @@ test:
 	go test -cover -failfast ./...
 
 clean:
-	rm -f oe .cover.out
+	rm -f oe .coverprofile
 
 pre-commit:
 	pre-commit run -a
