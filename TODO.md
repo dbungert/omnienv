@@ -54,7 +54,7 @@ Items from a code review of the current codebase, ordered by rough priority.
 
 ## Low Priority
 
-- [ ] **Refactor `lp1878225Quirk` into detection + remediation** (`app.go:138-192`).
+- [X] **Refactor `lp1878225Quirk` into detection + remediation** (`app.go:138-192`).
   The sentinel-value pattern (exit code 225) works but is opaque. Split the function
   into `isAffected()` and `applyWorkaround()`.
 
