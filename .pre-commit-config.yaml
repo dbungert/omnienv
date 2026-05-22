@@ -7,8 +7,6 @@ repos:
   - id: go-mod-tidy-repo
   - id: go-test-repo-mod
   # - id: go-sec-repo-mod
-  # go install honnef.co/go/tools/cmd/staticcheck@latest
   - id: go-staticcheck-repo-mod
   - id: go-fmt
-  # go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
   - id: golangci-lint-mod
