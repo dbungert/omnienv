@@ -58,9 +58,6 @@ Items from a code review of the current codebase, ordered by rough priority.
   The sentinel-value pattern (exit code 225) works but is opaque. Split the function
   into `isAffected()` and `applyWorkaround()`.
 
-- [ ] **Add a `lint` target to `Makefile`**. Currently only `pre-commit` and `test`
-  exist. A `make lint` would surface staticcheck/vet issues quickly.
-
 - [X] **Un-pin or pin-finalize pre-commit hooks** (`.pre-commit-config.yaml`). The
   `tekwizely/pre-commit-golang` rev is `v1.0.0-rc.1` (a release candidate). Consider
   moving to a stable release. Also `go-sec-repo-mod` and `golangci-lint-mod` are
