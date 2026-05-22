@@ -70,10 +70,6 @@ Items from a code review of the current codebase, ordered by rough priority.
   moving to a stable release. Also `go-sec-repo-mod` and `golangci-lint-mod` are
   commented out -- decide whether to enable or remove.
 
-- [ ] **Document GPG requirement for tag signing** (`scripts/tagger`). The script uses
-  `git tag -s` (signed tags), which fails silently if no GPG key is configured. Either
-  document the requirement or make signing optional.
-
 ## Test Coverage Gaps
 
 - [ ] **`startIfNeeded`**: only tests connect-fail path. No coverage for the state
