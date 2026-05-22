@@ -3,13 +3,13 @@ package main
 import "os"
 
 type UserInfo struct {
-	uid int
-	gid int
+	UID int
+	GID int
 }
 
 func CurrentUserInfo() UserInfo {
 	return UserInfo{
-		uid: os.Getuid(),
-		gid: os.Getgid(),
+		UID: os.Getuid(),
+		GID: os.Getgid(),
 	}
 }

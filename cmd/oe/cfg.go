@@ -87,8 +87,8 @@ func (cfg Config) IsVM() bool {
 func (cfg Config) LXDLaunchConfig(user UserInfo) string {
 	tmap := map[string]string{
 		"WORKDIR":  cfg.RootDir,
-		"HOST_UID": strconv.Itoa(user.uid),
-		"HOST_GID": strconv.Itoa(user.gid),
+		"HOST_UID": strconv.Itoa(user.UID),
+		"HOST_GID": strconv.Itoa(user.GID),
 	}
 
 	template := `

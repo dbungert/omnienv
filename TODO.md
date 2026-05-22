@@ -84,6 +84,6 @@ Items from a code review of the current codebase, ordered by rough priority.
   panics between `Chdir` and the defer, the working directory is corrupted.
   `t.Cleanup` is the idiomatic fix.
 
-- [ ] **Make `UserInfo` fields exported** (`user.go:6-7`). `uid` and `gid` are
+- [X] **Make `UserInfo` fields exported** (`user.go:6-7`). `uid` and `gid` are
   unexported. Fine while tests are in `package main`, but will break if extracted to a
   separate package.

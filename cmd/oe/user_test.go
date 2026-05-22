@@ -10,6 +10,6 @@ import (
 func TestGetUserIDs(t *testing.T) {
 	info := CurrentUserInfo()
 
-	assert.Equal(t, info.uid, os.Getuid())
-	assert.Equal(t, info.gid, os.Getgid())
+	assert.Equal(t, info.UID, os.Getuid())
+	assert.Equal(t, info.GID, os.Getgid())
 }
