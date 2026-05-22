@@ -49,10 +49,6 @@ Items from a code review of the current codebase, ordered by rough priority.
   LXD client (`start`, `isVM`), others shell out to the `lxc` CLI (`lxcRun`,
   `lxcExec`, `wait`). Pick one approach and migrate consistently.
 
-- [ ] **Fix YAML template indentation in `LXDLaunchConfig`** (`cfg.go:94-113`). The
-  `raw.idmap: |-` and `user.vendor-data: |` block scalars are at inconsistent
-  indentation levels. Works because LXD's config merge is lenient, but fragile.
-
 - [ ] **Set up CI pipeline**. The repo has no `.github/workflows/` or equivalent CI
   config. Add at minimum: `go build`, `go test`, `go vet`, and the pre-commit hooks.
 
