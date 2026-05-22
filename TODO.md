@@ -79,7 +79,7 @@ Items from a code review of the current codebase, ordered by rough priority.
 
 ## Test Hygiene
 
-- [ ] **Use `t.Cleanup` instead of manual `defer` in `TestGetConfig`**
+- [X] **Use `t.Cleanup` instead of manual `defer` in `TestGetConfig`**
   (`cfg_test.go:194-208`). The `os.Chdir` restore happens in a `defer`; if the test
   panics between `Chdir` and the defer, the working directory is corrupted.
   `t.Cleanup` is the idiomatic fix.

@@ -197,7 +197,7 @@ func TestGetConfig(t *testing.T) {
 	curdir, err := os.Getwd()
 	assert.Nil(t, err)
 	assert.Nil(t, os.Chdir(tempdir))
-	defer func() { _ = os.Chdir(curdir) }()
+	t.Cleanup(func() { _ = os.Chdir(curdir) })
 
 	data := []byte("system: warty")
 	filename := tempdir + "/" + cfgName
@@ -211,7 +211,7 @@ func TestNotGetConfig(t *testing.T) {
 	curdir, err := os.Getwd()
 	assert.Nil(t, err)
 	assert.Nil(t, os.Chdir("/"))
-	defer func() { _ = os.Chdir(curdir) }()
+	t.Cleanup(func() { _ = os.Chdir(curdir) })
 
 	_, err = GetConfig()
 	assert.Equal(t, errCfgNotFound, err)
