@@ -65,7 +65,7 @@ Items from a code review of the current codebase, ordered by rough priority.
 - [ ] **Add a `lint` target to `Makefile`**. Currently only `pre-commit` and `test`
   exist. A `make lint` would surface staticcheck/vet issues quickly.
 
-- [ ] **Un-pin or pin-finalize pre-commit hooks** (`.pre-commit-config.yaml`). The
+- [X] **Un-pin or pin-finalize pre-commit hooks** (`.pre-commit-config.yaml`). The
   `tekwizely/pre-commit-golang` rev is `v1.0.0-rc.1` (a release candidate). Consider
   moving to a stable release. Also `go-sec-repo-mod` and `golangci-lint-mod` are
   commented out -- decide whether to enable or remove.
