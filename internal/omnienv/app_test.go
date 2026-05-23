@@ -247,6 +247,237 @@ func TestIsUbuntuJammyTrue(t *testing.T) {
 	assert.True(t, jammy)
 }
 
+func TestLaunchContainerOk(t *testing.T) {
+	cmdCallCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		cmdCallCount++
+		switch cmdCallCount {
+		case 1:
+			return exec.Command("/bin/true") // lxc launch
+		case 2:
+			return exec.Command("/bin/echo", "Type: container") // lxc info
+		case 3:
+			return exec.Command("/bin/true") // lxc exec use_pty
+		case 4:
+			return exec.Command("/bin/true") // lxc exec cloud-init
+		default:
+			return exec.Command("/bin/true")
+		}
+	})
+	defer restoreCmd()
+
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Debian")
+	})
+	defer restoreCmdCtx()
+
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	assert.Nil(t, app.Launch())
+}
+
+func TestLaunchLaunchFails(t *testing.T) {
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/false")
+	})
+	defer restoreCmd()
+
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Debian")
+	})
+	defer restoreCmdCtx()
+
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.Launch()
+	assert.ErrorContains(t, err, "failed to create instance")
+}
+
+func TestLaunchWaitFails(t *testing.T) {
+	cmdCallCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		cmdCallCount++
+		if cmdCallCount == 1 {
+			return exec.Command("/bin/true") // lxc launch
+		}
+		return exec.Command("/bin/false") // lxc info
+	})
+	defer restoreCmd()
+
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Debian")
+	})
+	defer restoreCmdCtx()
+
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.Launch()
+	assert.ErrorContains(t, err, "failed to wait for instance")
+}
+
+func TestLaunchUsePtyFails(t *testing.T) {
+	cmdCallCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		cmdCallCount++
+		switch cmdCallCount {
+		case 1:
+			return exec.Command("/bin/true") // lxc launch
+		case 2:
+			return exec.Command("/bin/echo", "Type: container") // lxc info
+		case 3:
+			return exec.Command("/bin/false") // lxc exec use_pty
+		default:
+			return exec.Command("/bin/true")
+		}
+	})
+	defer restoreCmd()
+
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Debian")
+	})
+	defer restoreCmdCtx()
+
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.Launch()
+	assert.ErrorContains(t, err, "use_pty setup failure")
+}
+
+func TestLaunchCloudInitFails(t *testing.T) {
+	cmdCallCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		cmdCallCount++
+		switch cmdCallCount {
+		case 1:
+			return exec.Command("/bin/true") // lxc launch
+		case 2:
+			return exec.Command("/bin/echo", "Type: container") // lxc info
+		case 3:
+			return exec.Command("/bin/true") // lxc exec use_pty
+		case 4:
+			return exec.Command("/bin/false") // lxc exec cloud-init
+		default:
+			return exec.Command("/bin/true")
+		}
+	})
+	defer restoreCmd()
+
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Debian")
+	})
+	defer restoreCmdCtx()
+
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.Launch()
+	assert.ErrorContains(t, err, "cloud-init failure")
+}
+
+func TestLaunchQuirkFails(t *testing.T) {
+	ctxCallCount := 0
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		ctxCallCount++
+		if ctxCallCount == 1 {
+			return exec.Command("/bin/echo", "Ubuntu")
+		}
+		return exec.Command("/bin/echo", "22.04")
+	})
+	defer restoreCmdCtx()
+
+	cmdCallCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		cmdCallCount++
+		switch cmdCallCount {
+		case 1:
+			return exec.Command("/bin/true") // lxc launch
+		case 2:
+			return exec.Command("/bin/echo", "Type: container") // lxc info
+		case 3:
+			return exec.Command("/bin/true") // lxc exec use_pty
+		case 4:
+			return exec.Command("/bin/false") // lxc exec bus wait (quirk)
+		default:
+			return exec.Command("/bin/true")
+		}
+	})
+	defer restoreCmd()
+
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.Launch()
+	assert.ErrorContains(t, err, "LP #1878225 workaround failure")
+}
+
+func TestLp1878225QuirkNotJammy(t *testing.T) {
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Debian")
+	})
+	defer restoreCmdCtx()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	assert.Nil(t, app.lp1878225Quirk())
+}
+
+func TestLp1878225QuirkBusWaitFails(t *testing.T) {
+	ctxCallCount := 0
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		ctxCallCount++
+		if ctxCallCount == 1 {
+			return exec.Command("/bin/echo", "Ubuntu")
+		}
+		return exec.Command("/bin/echo", "22.04")
+	})
+	defer restoreCmdCtx()
+
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/false")
+	})
+	defer restoreCmd()
+
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.lp1878225Quirk()
+	assert.ErrorContains(t, err, "bus wait failure")
+}
+
+func TestLp1878225QuirkSeededStopFails(t *testing.T) {
+	ctxCallCount := 0
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		ctxCallCount++
+		if ctxCallCount == 1 {
+			return exec.Command("/bin/echo", "Ubuntu")
+		}
+		return exec.Command("/bin/echo", "22.04")
+	})
+	defer restoreCmdCtx()
+
+	cmdCallCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		cmdCallCount++
+		if cmdCallCount == 1 {
+			return exec.Command("/bin/true")
+		}
+		return exec.Command("/bin/false")
+	})
+	defer restoreCmd()
+
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.lp1878225Quirk()
+	assert.ErrorContains(t, err, "seeded stop failure")
+}
+
+func TestLp1878225QuirkJammyOk(t *testing.T) {
+	ctxCallCount := 0
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		ctxCallCount++
+		if ctxCallCount == 1 {
+			return exec.Command("/bin/echo", "Ubuntu")
+		}
+		return exec.Command("/bin/echo", "22.04")
+	})
+	defer restoreCmdCtx()
+
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/true")
+	})
+	defer restoreCmd()
+
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	assert.Nil(t, app.lp1878225Quirk())
+}
+
 func TestIsUbuntuJammyNotUbuntu(t *testing.T) {
 	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
 		return exec.Command("/bin/echo", "Debian")
