@@ -47,13 +47,40 @@ func TestName(t *testing.T) {
 	}
 }
 
-func TestStartIfNeededRunning(t *testing.T) {
-	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/echo", "Status: RUNNING")
-	})
-	defer restoreCmd()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	assert.Nil(t, app.StartIfNeeded())
+var startIfNeededTests = []struct {
+	summary string
+	cmd     *exec.Cmd
+	errMsg  string
+}{{
+	summary: "running",
+	cmd:     exec.Command("/bin/echo", "Status: RUNNING"),
+}, {
+	summary: "unknown",
+	cmd:     exec.Command("/bin/echo", "Status: UNKNOWN"),
+	errMsg:  "no handler for Status UNKNOWN",
+}, {
+	summary: "info fails",
+	cmd:     exec.Command("/bin/false"),
+	errMsg:  "failed to get instance info",
+}, {
+	summary: "no status",
+	cmd:     exec.Command("/bin/echo", "just some output"),
+	errMsg:  "could not determine status",
+}}
+
+func TestStartIfNeeded(t *testing.T) {
+	for _, test := range startIfNeededTests {
+		restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+			return test.cmd
+		})
+		err := App{Config: Config{Label: "l", System: NewSystem("s")}}.StartIfNeeded()
+		restoreCmd()
+		if test.errMsg != "" {
+			assert.ErrorContains(t, err, test.errMsg, test.summary)
+		} else {
+			assert.Nil(t, err, test.summary)
+		}
+	}
 }
 
 func TestStartIfNeededStopped(t *testing.T) {
@@ -68,36 +95,6 @@ func TestStartIfNeededStopped(t *testing.T) {
 	defer restoreCmd()
 	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
 	assert.Nil(t, app.StartIfNeeded())
-}
-
-func TestStartIfNeededUnknownStatus(t *testing.T) {
-	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/echo", "Status: UNKNOWN")
-	})
-	defer restoreCmd()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	err := app.StartIfNeeded()
-	assert.ErrorContains(t, err, "no handler for Status UNKNOWN")
-}
-
-func TestStartIfNeededInfoFails(t *testing.T) {
-	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/false")
-	})
-	defer restoreCmd()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	err := app.StartIfNeeded()
-	assert.ErrorContains(t, err, "failed to get instance info")
-}
-
-func TestStartIfNeededNoStatus(t *testing.T) {
-	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/echo", "just some output")
-	})
-	defer restoreCmd()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	err := app.StartIfNeeded()
-	assert.ErrorContains(t, err, "could not determine status")
 }
 
 var isVMTests = []struct {
