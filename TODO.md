@@ -68,14 +68,14 @@ Items from a code review of the current codebase, ordered by rough priority.
 - [X] **`startIfNeeded`**: only tests connect-fail path. No coverage for the state
   machine (Stopped → start, Running → no-op, unexpected status → error).
 
-- [ ] **`wait()`**: untested.
+- [X] **`wait()`**: untested.
 
-- [ ] **`launch()`**: untested (involves real LXD, but could integration-test the
+- [X] **`launch()`**: untested (involves real LXD, but could integration-test the
   config-piping / args construction).
 
-- [ ] **`lp1878225Quirk()`**: untested.
+- [X] **`lp1878225Quirk()`**: untested.
 
-- [ ] **`lxcRun()`**: untested.
+- [X] **`lxcRun()`**: untested.
 
 ## Test Hygiene
 
