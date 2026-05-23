@@ -135,6 +135,16 @@ func (app App) lxcRun(args ...string) error {
 	return nil
 }
 
+func (app App) lxcOutput(args ...string) (string, error) {
+	cmd := append([]string{"lxc", "exec", app.name(), "--"}, args...)
+	slog.Debug("run", "command", cmd)
+	out, err := command(cmd[0], cmd[1:]...).Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
 func (app App) isUbuntuJammy() (bool, error) {
 	// LP: #1878225 - cloud-init status --wait appears to never resolve, as
 	// other things earlier in the chain aren't finalized.  Per the LP,
@@ -143,25 +153,13 @@ func (app App) isUbuntuJammy() (bool, error) {
 	// in subsequent releases.  Only Jammy appears affected among the
 	// tested images.
 
-	prefix := []string{"lxc", "exec", app.name(), "--"}
-
-	cmd := command(prefix[0], append(prefix[1:], "lsb_release", "-i", "-s")...)
-	slog.Debug("run", "command", cmd.Args)
-	out, err := cmd.Output()
-	if err != nil {
-		return false, nil
-	}
-	if strings.TrimSpace(string(out)) != "Ubuntu" {
+	out, err := app.lxcOutput("lsb_release", "-i", "-s")
+	if err != nil || out != "Ubuntu" {
 		return false, nil
 	}
 
-	cmd = command(prefix[0], append(prefix[1:], "lsb_release", "-r", "-s")...)
-	slog.Debug("run", "command", cmd.Args)
-	out, err = cmd.Output()
-	if err != nil {
-		return false, nil
-	}
-	if strings.TrimSpace(string(out)) != "22.04" {
+	out, err = app.lxcOutput("lsb_release", "-r", "-s")
+	if err != nil || out != "22.04" {
 		return false, nil
 	}
 
