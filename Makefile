@@ -9,7 +9,7 @@ oe:
 .PHONY: oe
 
 test:
-	go test -cover -failfast ./...
+	go test -v ./... -coverpkg=./... -coverprofile=.coverprofile
 .PHONY: test
 
 clean:

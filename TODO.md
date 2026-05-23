@@ -65,7 +65,7 @@ Items from a code review of the current codebase, ordered by rough priority.
 
 ## Test Coverage Gaps
 
-- [ ] **`startIfNeeded`**: only tests connect-fail path. No coverage for the state
+- [X] **`startIfNeeded`**: only tests connect-fail path. No coverage for the state
   machine (Stopped → start, Running → no-op, unexpected status → error).
 
 - [ ] **`wait()`**: untested.

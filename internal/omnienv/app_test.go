@@ -1,6 +1,7 @@
 package omnienv
 
 import (
+	"os/exec"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -42,4 +43,57 @@ func TestName(t *testing.T) {
 		assert.Equal(t, test.name, app.name(), test.summary)
 		assert.Equal(t, test.launchImage, app.launchImage(), test.summary)
 	}
+}
+
+func TestStartIfNeededRunning(t *testing.T) {
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Status: RUNNING")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	assert.Nil(t, app.StartIfNeeded())
+}
+
+func TestStartIfNeededStopped(t *testing.T) {
+	callCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		callCount++
+		if callCount == 1 {
+			return exec.Command("/bin/echo", "Status: STOPPED")
+		}
+		return exec.Command("/bin/true")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	assert.Nil(t, app.StartIfNeeded())
+}
+
+func TestStartIfNeededUnknownStatus(t *testing.T) {
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Status: UNKNOWN")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.StartIfNeeded()
+	assert.ErrorContains(t, err, "no handler for Status UNKNOWN")
+}
+
+func TestStartIfNeededInfoFails(t *testing.T) {
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/false")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.StartIfNeeded()
+	assert.ErrorContains(t, err, "failed to get instance info")
+}
+
+func TestStartIfNeededNoStatus(t *testing.T) {
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "just some output")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.StartIfNeeded()
+	assert.ErrorContains(t, err, "could not determine status")
 }
