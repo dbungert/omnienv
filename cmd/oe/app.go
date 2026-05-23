@@ -129,6 +129,7 @@ func (app App) wait() error {
 
 func (app App) lxcRun(args ...string) error {
 	cmd := append([]string{"lxc", "exec", app.name(), "--"}, args...)
+	slog.Debug("run", "command", cmd)
 	if err := run(cmd...); err != nil {
 		return fmt.Errorf("cmd %v failure: %w", cmd, err)
 	}
