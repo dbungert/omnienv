@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -128,10 +129,11 @@ func (app App) lxcExec(args ...string) error {
 	return run(cmd...)
 }
 
-func (app App) lxcOutput(args ...string) (string, error) {
+func (app App) lxcOutput(ctx context.Context, args ...string) (string, error) {
 	cmd := append([]string{"lxc", "exec", app.name(), "--"}, args...)
-	slog.Debug("run", "command", cmd)
-	out, err := command(cmd[0], cmd[1:]...).Output()
+	cc := commandContext(ctx, cmd[0], cmd[1:]...)
+	slog.Debug("run", "command", cc.Args)
+	out, err := cc.Output()
 	if err != nil {
 		return "", err
 	}
@@ -146,12 +148,15 @@ func (app App) isUbuntuJammy() (bool, error) {
 	// in subsequent releases.  Only Jammy appears affected among the
 	// tested images.
 
-	out, err := app.lxcOutput("lsb_release", "-i", "-s")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	out, err := app.lxcOutput(ctx, "lsb_release", "-i", "-s")
 	if err != nil || out != "Ubuntu" {
 		return false, nil
 	}
 
-	out, err = app.lxcOutput("lsb_release", "-r", "-s")
+	out, err = app.lxcOutput(ctx, "lsb_release", "-r", "-s")
 	if err != nil || out != "22.04" {
 		return false, nil
 	}

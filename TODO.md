@@ -9,7 +9,7 @@ Items from a code review of the current codebase, ordered by rough priority.
   becomes reachable, this hangs forever. Add a context with a deadline or a max-retry
   count.
 
-- [ ] **Add timeout to `lp1878225Quirk` bus-wait loop** (`app.go:172-184`). The `for i
+- [X] **Add timeout to `lp1878225Quirk` bus-wait loop** (`app.go:172-184`). The `for i
   in $(seq 10)` fallback is already bounded, but the initial `lsb_release` check has
   no timeout on the outer `lxc exec`. Not critical, but adds defense in depth.
 
