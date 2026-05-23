@@ -18,7 +18,7 @@ Items from a code review of the current codebase, ordered by rough priority.
   are reassignable package vars mutated by tests. This makes production reasoning hard
   and tests leaky. Move them into `App` struct fields or an interface.
 
-- [ ] **Add `Run() error` pattern to `main.go`**. Currently `main()` does real work
+- [X] **Add `Run() error` pattern to `main.go`**. Currently `main()` does real work
   and calls `fatal()` inline. Idiomatic Go extracts a `func (app App) Run() error` and
   keeps `main()` as:
 

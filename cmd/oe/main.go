@@ -22,15 +22,10 @@ func runDevNull(args ...string) error {
 	return cmd.Run()
 }
 
-func fatal(msg string, args ...any) {
-	slog.Error(msg, args...)
-	os.Exit(1)
-}
-
-func main() {
+func Run() error {
 	opts, err := GetOpts(os.Args[1:])
 	if err != nil {
-		return
+		return nil
 	}
 
 	if opts.Version {
@@ -39,7 +34,7 @@ func main() {
 			ver = bi.Main.Version
 		}
 		fmt.Printf("omnienv version: %v\n", ver)
-		os.Exit(0)
+		return nil
 	}
 
 	setupLogging(opts)
@@ -47,18 +42,27 @@ func main() {
 
 	cfg, err := GetConfig()
 	if err != nil {
-		fatal("fatal error", "error", err)
+		return fmt.Errorf("fatal error: %w", err)
 	}
 
 	app := App{Config: cfg, Opts: opts}
 
 	if opts.Launch {
 		if err := app.launch(); err != nil {
-			fatal("failed to launch", "error", err)
+			return fmt.Errorf("failed to launch: %w", err)
 		}
 	}
 
 	if err := app.shell(); err != nil {
-		fatal("failed to create shell", "error", err)
+		return fmt.Errorf("failed to create shell: %w", err)
+	}
+
+	return nil
+}
+
+func main() {
+	if err := Run(); err != nil {
+		slog.Error("fatal error", "error", err)
+		os.Exit(1)
 	}
 }
