@@ -232,13 +232,8 @@ func TestWaitVMEventualSuccess(t *testing.T) {
 }
 
 func TestIsUbuntuJammyTrue(t *testing.T) {
-	callCount := 0
 	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
-		callCount++
-		if callCount == 1 {
-			return exec.Command("/bin/echo", "Ubuntu")
-		}
-		return exec.Command("/bin/echo", "22.04")
+		return exec.Command("/bin/printf", "Distributor ID: Ubuntu\nRelease: 22.04")
 	})
 	defer restoreCmdCtx()
 	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
@@ -435,13 +430,8 @@ func TestLaunchCloudInitFails(t *testing.T) {
 }
 
 func TestLaunchQuirkFails(t *testing.T) {
-	ctxCallCount := 0
 	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
-		ctxCallCount++
-		if ctxCallCount == 1 {
-			return exec.Command("/bin/echo", "Ubuntu")
-		}
-		return exec.Command("/bin/echo", "22.04")
+		return exec.Command("/bin/printf", "Distributor ID: Ubuntu\nRelease: 22.04")
 	})
 	defer restoreCmdCtx()
 
@@ -502,13 +492,8 @@ func TestLp1878225QuirkNotJammy(t *testing.T) {
 }
 
 func TestLp1878225QuirkBusWaitFails(t *testing.T) {
-	ctxCallCount := 0
 	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
-		ctxCallCount++
-		if ctxCallCount == 1 {
-			return exec.Command("/bin/echo", "Ubuntu")
-		}
-		return exec.Command("/bin/echo", "22.04")
+		return exec.Command("/bin/printf", "Distributor ID: Ubuntu\nRelease: 22.04")
 	})
 	defer restoreCmdCtx()
 
@@ -523,13 +508,8 @@ func TestLp1878225QuirkBusWaitFails(t *testing.T) {
 }
 
 func TestLp1878225QuirkSeededStopFails(t *testing.T) {
-	ctxCallCount := 0
 	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
-		ctxCallCount++
-		if ctxCallCount == 1 {
-			return exec.Command("/bin/echo", "Ubuntu")
-		}
-		return exec.Command("/bin/echo", "22.04")
+		return exec.Command("/bin/printf", "Distributor ID: Ubuntu\nRelease: 22.04")
 	})
 	defer restoreCmdCtx()
 
@@ -549,13 +529,8 @@ func TestLp1878225QuirkSeededStopFails(t *testing.T) {
 }
 
 func TestLp1878225QuirkJammyOk(t *testing.T) {
-	ctxCallCount := 0
 	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
-		ctxCallCount++
-		if ctxCallCount == 1 {
-			return exec.Command("/bin/echo", "Ubuntu")
-		}
-		return exec.Command("/bin/echo", "22.04")
+		return exec.Command("/bin/printf", "Distributor ID: Ubuntu\nRelease: 22.04")
 	})
 	defer restoreCmdCtx()
 
@@ -591,13 +566,8 @@ func TestIsUbuntuJammyFirstFails(t *testing.T) {
 }
 
 func TestIsUbuntuJammyWrongVersion(t *testing.T) {
-	callCount := 0
 	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
-		callCount++
-		if callCount == 1 {
-			return exec.Command("/bin/echo", "Ubuntu")
-		}
-		return exec.Command("/bin/echo", "24.04")
+		return exec.Command("/bin/printf", "Distributor ID: Ubuntu\nRelease: 24.04")
 	})
 	defer restoreCmdCtx()
 	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
@@ -607,13 +577,8 @@ func TestIsUbuntuJammyWrongVersion(t *testing.T) {
 }
 
 func TestIsUbuntuJammyVersionFails(t *testing.T) {
-	callCount := 0
 	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
-		callCount++
-		if callCount == 1 {
-			return exec.Command("/bin/echo", "Ubuntu")
-		}
-		return exec.Command("/bin/false")
+		return exec.Command("/bin/printf", "Distributor ID: Ubuntu")
 	})
 	defer restoreCmdCtx()
 	app := App{Config: Config{Label: "l", System: NewSystem("s")}}

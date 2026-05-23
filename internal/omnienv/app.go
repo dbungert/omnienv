@@ -155,17 +155,22 @@ func (app App) isUbuntuJammy() (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	out, err := app.lxcOutput(ctx, "lsb_release", "-i", "-s")
-	if err != nil || out != "Ubuntu" {
+	out, err := app.lxcOutput(ctx, "lsb_release", "-a")
+	if err != nil {
 		return false, nil
 	}
 
-	out, err = app.lxcOutput(ctx, "lsb_release", "-r", "-s")
-	if err != nil || out != "22.04" {
-		return false, nil
+	var distrib, release string
+	for _, line := range strings.Split(out, "\n") {
+		if after, found := strings.CutPrefix(line, "Distributor ID:"); found {
+			distrib = strings.TrimSpace(after)
+		}
+		if after, found := strings.CutPrefix(line, "Release:"); found {
+			release = strings.TrimSpace(after)
+		}
 	}
 
-	return true, nil
+	return distrib == "Ubuntu" && release == "22.04", nil
 }
 
 func (app App) lp1878225Quirk() error {
