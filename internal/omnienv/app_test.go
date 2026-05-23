@@ -100,46 +100,43 @@ func TestStartIfNeededNoStatus(t *testing.T) {
 	assert.ErrorContains(t, err, "could not determine status")
 }
 
-func TestIsVMVM(t *testing.T) {
-	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/echo", "Type: virtual-machine")
-	})
-	defer restoreCmd()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	vm, err := app.isVM()
-	assert.Nil(t, err)
-	assert.True(t, vm)
-}
+var isVMTests = []struct {
+	summary string
+	cmd     *exec.Cmd
+	vm      bool
+	errMsg  string
+}{{
+	summary: "virtual-machine",
+	cmd:     exec.Command("/bin/echo", "Type: virtual-machine"),
+	vm:      true,
+}, {
+	summary: "container",
+	cmd:     exec.Command("/bin/echo", "Type: container"),
+	vm:      false,
+}, {
+	summary: "info fails",
+	cmd:     exec.Command("/bin/false"),
+	errMsg:  "failed to get instance info",
+}, {
+	summary: "no type",
+	cmd:     exec.Command("/bin/echo", "Status: RUNNING"),
+	errMsg:  "could not determine type",
+}}
 
-func TestIsVMContainer(t *testing.T) {
-	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/echo", "Type: container")
-	})
-	defer restoreCmd()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	vm, err := app.isVM()
-	assert.Nil(t, err)
-	assert.False(t, vm)
-}
-
-func TestIsVMInfoFails(t *testing.T) {
-	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/false")
-	})
-	defer restoreCmd()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	_, err := app.isVM()
-	assert.ErrorContains(t, err, "failed to get instance info")
-}
-
-func TestIsVMNoType(t *testing.T) {
-	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/echo", "Status: RUNNING")
-	})
-	defer restoreCmd()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	_, err := app.isVM()
-	assert.ErrorContains(t, err, "could not determine type")
+func TestIsVM(t *testing.T) {
+	for _, test := range isVMTests {
+		restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+			return test.cmd
+		})
+		vm, err := App{Config: Config{Label: "l", System: NewSystem("s")}}.isVM()
+		restoreCmd()
+		if test.errMsg != "" {
+			assert.ErrorContains(t, err, test.errMsg, test.summary)
+		} else {
+			assert.Nil(t, err, test.summary)
+			assert.Equal(t, test.vm, vm, test.summary)
+		}
+	}
 }
 
 func TestWaitNotVM(t *testing.T) {
