@@ -402,6 +402,30 @@ func TestLaunchQuirkFails(t *testing.T) {
 	assert.ErrorContains(t, err, "LP #1878225 workaround failure")
 }
 
+var sudoLoginTests = []struct {
+	summary string
+	script  string
+	app     App
+
+	expected []string
+}{{
+	summary:  "simple shell",
+	script:   "echo hi",
+	app:      App{Config: Config{Label: "l", System: NewSystem("s")}},
+	expected: []string{"sudo", "--login", "--user", "user", "sh", "-c", "echo hi"},
+}, {
+	summary:  "cd command",
+	script:   `cd "/project" && exec $SHELL`,
+	app:      App{Config: Config{Label: "l", System: NewSystem("s")}},
+	expected: []string{"sudo", "--login", "--user", "user", "sh", "-c", `cd "/project" && exec $SHELL`},
+}}
+
+func TestSudoLogin(t *testing.T) {
+	for _, test := range sudoLoginTests {
+		assert.Equal(t, test.expected, test.app.sudoLogin(test.script), test.summary)
+	}
+}
+
 func TestLp1878225QuirkNotJammy(t *testing.T) {
 	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
 		return exec.Command("/bin/echo", "Debian")
