@@ -14,7 +14,7 @@ Items from a code review of the current codebase, ordered by rough priority.
   no timeout on the outer `lxc exec`. Not critical, but adds defense in depth.
 
 - [ ] **Replace global variable indirection with dependency injection**
-  (`globals.go`). `command`, `connectLXDUnix`, `lookPath`, `syscallExec`, `timeSleep`
+  (`globals.go`). `command`, `connectLXDUnix`, `lookPath`, `timeSleep`
   are reassignable package vars mutated by tests. This makes production reasoning hard
   and tests leaky. Move them into `App` struct fields or an interface.
 

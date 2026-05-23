@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"os/exec"
 	"testing"
 
 	lxd "github.com/canonical/lxd/client"
@@ -37,19 +38,14 @@ func TestLxcExec(t *testing.T) {
 	})
 	defer restoreLP()
 
-	restoreUser := patchEnv("USER", "user")
-	defer restoreUser()
-
-	restoreSE := Patch(&syscallExec, func(argv0 string, argv []string, envv []string) (err error) {
-		assert.Equal(t, argv0, "/foo/lxc")
-		assert.Equal(t, argv, []string{
-			"/foo/lxc", "exec", "-", "--",
-			"sudo", "--login", "--user", "user",
-			"sh", "-c", "bar",
-		})
-		return nil
+	restoreCmd := Patch(&command, func(arg0 string, argv ...string) *exec.Cmd {
+		assert.Equal(t, "/foo/lxc", arg0)
+		assert.Equal(t, []string{"exec", "-", "--", "bar"}, argv)
+		cmd := exec.Command("/bin/true")
+		cmd.Args = append([]string{arg0}, argv...)
+		return cmd
 	})
-	defer restoreSE()
+	defer restoreCmd()
 	assert.Nil(t, App{}.lxcExec("bar"))
 }
 

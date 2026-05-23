@@ -244,19 +244,15 @@ func (app App) sudoLogin(script string) []string {
 	}
 }
 
-func (app App) lxcExec(script string) error {
+func (app App) lxcExec(args ...string) error {
 	lxc, err := lookPath("lxc")
 	if err != nil {
 		return err
 	}
 
-	// get a shell to the instance via lxc
-	args := []string{lxc, "exec", app.name(), "--"}
-	args = append(args, app.sudoLogin(script)...)
-
-	slog.Debug("exec", "command", args)
-	envv := os.Environ()
-	return syscallExec(args[0], args, envv)
+	cmd := append([]string{lxc, "exec", app.name(), "--"}, args...)
+	slog.Debug("run", "command", cmd)
+	return run(cmd...)
 }
 
 func (app App) shell() error {
@@ -288,7 +284,7 @@ func (app App) shell() error {
 		)
 	}
 
-	if err := app.lxcExec(script); err != nil {
+	if err := app.lxcExec(app.sudoLogin(script)...); err != nil {
 		return fmt.Errorf("failed to lxc exec: %w", err)
 	}
 	return nil
