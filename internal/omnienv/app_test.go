@@ -247,6 +247,72 @@ func TestIsUbuntuJammyTrue(t *testing.T) {
 	assert.True(t, jammy)
 }
 
+func TestShellContainerOk(t *testing.T) {
+	cmdCallCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		cmdCallCount++
+		switch cmdCallCount {
+		case 1:
+			return exec.Command("/bin/echo", "Status: RUNNING") // StartIfNeeded
+		case 2:
+			return exec.Command("/bin/echo", "Type: container") // Wait → isVM
+		case 3:
+			return exec.Command("/bin/true") // lxcExec
+		default:
+			return exec.Command("/bin/true")
+		}
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	assert.Nil(t, app.Shell())
+}
+
+func TestShellStartIfNeededFails(t *testing.T) {
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/false")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.Shell()
+	assert.ErrorContains(t, err, "failed to start instance")
+}
+
+func TestShellWaitFails(t *testing.T) {
+	cmdCallCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		cmdCallCount++
+		if cmdCallCount == 1 {
+			return exec.Command("/bin/echo", "Status: RUNNING") // StartIfNeeded
+		}
+		return exec.Command("/bin/false") // Wait → isVM
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.Shell()
+	assert.ErrorContains(t, err, "failed to wait for instance")
+}
+
+func TestShellLxcExecFails(t *testing.T) {
+	cmdCallCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		cmdCallCount++
+		switch cmdCallCount {
+		case 1:
+			return exec.Command("/bin/echo", "Status: RUNNING") // StartIfNeeded
+		case 2:
+			return exec.Command("/bin/echo", "Type: container") // Wait → isVM
+		case 3:
+			return exec.Command("/bin/false") // lxcExec
+		default:
+			return exec.Command("/bin/true")
+		}
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.Shell()
+	assert.ErrorContains(t, err, "failed to lxc exec")
+}
+
 func TestLaunchContainerOk(t *testing.T) {
 	cmdCallCount := 0
 	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
