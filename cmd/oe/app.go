@@ -101,7 +101,7 @@ func (app App) wait() error {
 	}
 
 	fmt.Print("Waiting")
-	for {
+	for i := 0; ; i++ {
 		err := runDevNull(
 			"lxc", "exec", app.name(), "--", "/bin/true",
 		)
@@ -117,10 +117,14 @@ func (app App) wait() error {
 
 		if ec := exitError.ExitCode(); ec != 255 {
 			return fmt.Errorf("strange exit code %d", ec)
-		} else {
-			timeSleep(time.Second)
-			fmt.Print(".")
 		}
+
+		if i >= 300 {
+			return fmt.Errorf("timed out waiting for %s to become reachable", app.name())
+		}
+
+		timeSleep(time.Second)
+		fmt.Print(".")
 	}
 }
 

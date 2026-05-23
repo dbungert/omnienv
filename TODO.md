@@ -4,7 +4,7 @@ Items from a code review of the current codebase, ordered by rough priority.
 
 ## High Priority
 
-- [ ] **Add `context.Context` with timeout to VM wait loop** (`app.go:107-128`). The
+- [X] **Add `context.Context` with timeout to VM wait loop** (`app.go:107-128`). The
   `wait()` method polls `lxc exec … /bin/true` in an unbounded loop. If a VM never
   becomes reachable, this hangs forever. Add a context with a deadline or a max-retry
   count.
