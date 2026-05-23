@@ -228,15 +228,42 @@ func TestWaitVMEventualSuccess(t *testing.T) {
 	assert.Nil(t, app.Wait())
 }
 
-func TestIsUbuntuJammyTrue(t *testing.T) {
-	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/printf", "Distributor ID: Ubuntu\nRelease: 22.04")
-	})
-	defer restoreCmdCtx()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	jammy, err := app.isUbuntuJammy()
-	assert.Nil(t, err)
-	assert.True(t, jammy)
+var isUbuntuJammyTests = []struct {
+	summary string
+	cmd     *exec.Cmd
+	want    bool
+}{{
+	summary: "true",
+	cmd:     exec.Command("/bin/printf", "Distributor ID: Ubuntu\nRelease: 22.04"),
+	want:    true,
+}, {
+	summary: "not Ubuntu",
+	cmd:     exec.Command("/bin/echo", "Debian"),
+	want:    false,
+}, {
+	summary: "command fails",
+	cmd:     exec.Command("/bin/false"),
+	want:    false,
+}, {
+	summary: "wrong version",
+	cmd:     exec.Command("/bin/printf", "Distributor ID: Ubuntu\nRelease: 24.04"),
+	want:    false,
+}, {
+	summary: "no release",
+	cmd:     exec.Command("/bin/printf", "Distributor ID: Ubuntu"),
+	want:    false,
+}}
+
+func TestIsUbuntuJammy(t *testing.T) {
+	for _, test := range isUbuntuJammyTests {
+		restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+			return test.cmd
+		})
+		jammy, err := App{Config: Config{Label: "l", System: NewSystem("s")}}.isUbuntuJammy()
+		restoreCmdCtx()
+		assert.Nil(t, err, test.summary)
+		assert.Equal(t, test.want, jammy, test.summary)
+	}
 }
 
 func TestShellContainerOk(t *testing.T) {
@@ -538,48 +565,4 @@ func TestLp1878225QuirkJammyOk(t *testing.T) {
 
 	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
 	assert.Nil(t, app.lp1878225Quirk())
-}
-
-func TestIsUbuntuJammyNotUbuntu(t *testing.T) {
-	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/echo", "Debian")
-	})
-	defer restoreCmdCtx()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	jammy, err := app.isUbuntuJammy()
-	assert.Nil(t, err)
-	assert.False(t, jammy)
-}
-
-func TestIsUbuntuJammyFirstFails(t *testing.T) {
-	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/false")
-	})
-	defer restoreCmdCtx()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	jammy, err := app.isUbuntuJammy()
-	assert.Nil(t, err)
-	assert.False(t, jammy)
-}
-
-func TestIsUbuntuJammyWrongVersion(t *testing.T) {
-	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/printf", "Distributor ID: Ubuntu\nRelease: 24.04")
-	})
-	defer restoreCmdCtx()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	jammy, err := app.isUbuntuJammy()
-	assert.Nil(t, err)
-	assert.False(t, jammy)
-}
-
-func TestIsUbuntuJammyVersionFails(t *testing.T) {
-	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
-		return exec.Command("/bin/printf", "Distributor ID: Ubuntu")
-	})
-	defer restoreCmdCtx()
-	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
-	jammy, err := app.isUbuntuJammy()
-	assert.Nil(t, err)
-	assert.False(t, jammy)
 }
