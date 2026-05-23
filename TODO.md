@@ -14,7 +14,7 @@ Items from a code review of the current codebase, ordered by rough priority.
   no timeout on the outer `lxc exec`. Not critical, but adds defense in depth.
 
 - [ ] **Replace global variable indirection with dependency injection**
-  (`globals.go`). `command`, `connectLXDUnix`, `timeSleep`
+  (`globals.go`). `command`, `timeSleep`
   are reassignable package vars mutated by tests. This makes production reasoning hard
   and tests leaky. Move them into `App` struct fields or an interface.
 
@@ -45,7 +45,7 @@ Items from a code review of the current codebase, ordered by rough priority.
   logic into a separate package prevents import cycles, enables reuse, and improves
   testability.
 
-- [ ] **Consolidate LXD interaction approach** (`app.go`). Some operations use the Go
+- [X] **Consolidate LXD interaction approach** (`app.go`). Some operations use the Go
   LXD client (`start`, `isVM`), others shell out to the `lxc` CLI (`lxcRun`,
   `lxcExec`, `wait`). Pick one approach and migrate consistently.
 

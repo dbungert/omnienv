@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"al.essio.dev/pkg/shellescape"
-	lxd "github.com/canonical/lxd/client"
-	"github.com/canonical/lxd/shared/api"
 )
 
 type App struct {
@@ -37,61 +35,59 @@ func (app App) name() string {
 	return fmt.Sprintf("%s-%s", app.Config.Label, app.system())
 }
 
-func (app App) start(c lxd.InstanceServer) error {
-	reqState := api.InstanceStatePut{Action: "start", Timeout: -1}
-	op, err := c.UpdateInstanceState(app.name(), reqState, "")
-	if err != nil {
-		return err
+func (app App) start() error {
+	args := []string{"lxc", "start", app.name()}
+	slog.Debug("run", "command", args)
+	if err := run(args...); err != nil {
+		return fmt.Errorf("failed to start instance: %w", err)
 	}
-
-	if err = op.Wait(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (app App) startIfNeeded() error {
-	// Connect to LXD over the Unix socket
-	c, err := connectLXDUnix("", nil)
+	cmd := command("lxc", "info", app.name())
+	slog.Debug("run", "command", cmd.Args)
+	out, err := cmd.Output()
 	if err != nil {
-		return err
-	}
-	defer c.Disconnect()
-
-	// middle arg is the etag
-	state, _, err := c.GetInstanceState(app.name())
-	if err != nil {
-		return err
+		return fmt.Errorf("failed to get instance info: %w", err)
 	}
 
-	slog.Debug("startIfNeeded", "instanceStatus", state.Status)
-	switch state.Status {
-	case "Stopped":
-		return app.start(c)
-	case "Running":
-		// no action required
+	var status string
+	for _, line := range strings.Split(string(out), "\n") {
+		if after, found := strings.CutPrefix(line, "Status: "); found {
+			status = after
+			break
+		}
+	}
+	if status == "" {
+		return fmt.Errorf("could not determine status of instance %s", app.name())
+	}
+
+	slog.Debug("startIfNeeded", "instanceStatus", status)
+	switch status {
+	case "STOPPED":
+		return app.start()
+	case "RUNNING":
 		return nil
 	default:
-		return fmt.Errorf("no handler for Status %v", state.Status)
+		return fmt.Errorf("no handler for Status %v", status)
 	}
 }
 
 func (app App) isVM() (bool, error) {
-	// Connect to LXD over the Unix socket
-	c, err := connectLXDUnix("", nil)
+	cmd := command("lxc", "info", app.name())
+	slog.Debug("run", "command", cmd.Args)
+	out, err := cmd.Output()
 	if err != nil {
-		return false, err
-	}
-	defer c.Disconnect()
-
-	// middle arg is the etag
-	inst, _, err := c.GetInstance(app.name())
-	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to get instance info: %w", err)
 	}
 
-	return inst.Type == "virtual-machine", nil
+	for _, line := range strings.Split(string(out), "\n") {
+		if after, found := strings.CutPrefix(line, "Type: "); found {
+			return after == "virtual-machine", nil
+		}
+	}
+	return false, fmt.Errorf("could not determine type of instance %s", app.name())
 }
 
 func (app App) wait() error {

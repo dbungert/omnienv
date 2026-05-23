@@ -1,35 +1,16 @@
 package main
 
 import (
-	"errors"
 	"os/exec"
 	"testing"
 
-	lxd "github.com/canonical/lxd/client"
 	"github.com/stretchr/testify/assert"
 )
-
-func mockApp() App {
-	return App{Config: Config{Label: "l", System: NewSystem("s")}}
-}
 
 func Patch[T any](target *T, mock T) func() {
 	original := *target
 	*target = mock
 	return func() { *target = original }
-}
-
-func patchConnect(is lxd.InstanceServer, err error) func() {
-	restore := Patch(&connectLXDUnix, func(path string, args *lxd.ConnectionArgs) (lxd.InstanceServer, error) {
-		return is, err
-	})
-	return restore
-}
-
-func TestStartIfNeeded_ConnectFail(t *testing.T) {
-	restore := patchConnect(nil, errors.New("error"))
-	defer restore()
-	assert.NotNil(t, mockApp().startIfNeeded())
 }
 
 func TestLxcExec(t *testing.T) {
