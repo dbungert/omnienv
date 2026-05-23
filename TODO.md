@@ -40,7 +40,7 @@ Items from a code review of the current codebase, ordered by rough priority.
 
 ## Medium Priority
 
-- [ ] **Extract an internal package** (e.g. `pkg/omnienv`). Currently everything is in
+- [X] **Extract an internal package** (e.g. `pkg/omnienv`). Currently everything is in
   `package main`. Extracting config parsing, instance management, and cloud-init
   logic into a separate package prevents import cycles, enables reuse, and improves
   testability.

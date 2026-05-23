@@ -4,11 +4,11 @@ import (
 	"log/slog"
 )
 
-func setupLogging(opts Opts) {
+func setupLogging(verbose bool) {
 	var programLevel = new(slog.LevelVar)
 	hOpts := &slog.HandlerOptions{Level: programLevel}
 	slog.SetDefault(slog.New(slog.NewTextHandler(stderr, hOpts)))
-	if opts.Verbose {
+	if verbose {
 		programLevel.Set(slog.LevelDebug)
 	}
 }

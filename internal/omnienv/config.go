@@ -1,4 +1,4 @@
-package main
+package omnienv
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ import (
 
 var cfgName = ".omnienv.yaml"
 
-var errCfgNotFound = errors.New("Config not found")
+var ErrCfgNotFound = errors.New("Config not found")
 
 type System struct {
 	Name  string
@@ -80,11 +80,11 @@ type Config struct {
 	Series  string
 }
 
-func (cfg Config) IsVM() bool {
+func (cfg Config) isVM() bool {
 	return cfg.Virtualization == "vm"
 }
 
-func (cfg Config) LXDLaunchConfig(user UserInfo) string {
+func (cfg Config) lxdLaunchConfig(user UserInfo) string {
 	tmap := map[string]string{
 		"WORKDIR":  cfg.RootDir,
 		"HOST_UID": strconv.Itoa(user.UID),
@@ -133,7 +133,7 @@ func findConfig(dir string) (string, error) {
 		dir = filepath.Dir(dir)
 	}
 
-	return "", errCfgNotFound
+	return "", ErrCfgNotFound
 }
 
 func loadConfig(path string) (Config, error) {

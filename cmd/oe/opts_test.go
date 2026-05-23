@@ -3,6 +3,7 @@ package main
 import (
 	"testing"
 
+	"github.com/dbungert/omnienv/internal/omnienv"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -10,50 +11,48 @@ var argsTests = []struct {
 	summary   string
 	argsInput []string
 
-	opts Opts
+	opts omnienv.Opts
 }{{
 	summary:   "one arg",
 	argsInput: []string{"asdf"},
-	opts:      Opts{Params: []string{"asdf"}},
+	opts:      omnienv.Opts{Params: []string{"asdf"}},
 }, {
 	summary:   "launch",
 	argsInput: []string{"--launch"},
-	opts:      Opts{Launch: true},
+	opts:      omnienv.Opts{Launch: true},
 }, {
 	summary:   "verbose",
 	argsInput: []string{"--verbose"},
-	opts:      Opts{Verbose: true},
+	opts:      omnienv.Opts{Verbose: true},
 }, {
 	summary:   "v",
 	argsInput: []string{"-v"},
-	opts:      Opts{Verbose: true},
+	opts:      omnienv.Opts{Verbose: true},
 }, {
 	summary:   "system",
 	argsInput: []string{"--system", "foo"},
-	opts:      Opts{System: "foo"},
+	opts:      omnienv.Opts{System: "foo"},
 }, {
 	summary:   "system + param",
 	argsInput: []string{"--system", "foo", "bar"},
-	opts:      Opts{System: "foo", Params: []string{"bar"}},
+	opts:      omnienv.Opts{System: "foo", Params: []string{"bar"}},
 }, {
 	summary:   "version",
 	argsInput: []string{"--version"},
-	opts:      Opts{Version: true},
+	opts:      omnienv.Opts{Version: true},
 }, {
 	summary:   "pass after unrecognized",
 	argsInput: []string{"bash", "--help"},
-	opts:      Opts{Params: []string{"bash", "--help"}},
+	opts:      omnienv.Opts{Params: []string{"bash", "--help"}},
 }, {
 	summary:   "pass after double dash",
 	argsInput: []string{"--", "bash", "--help"},
-	opts:      Opts{Params: []string{"bash", "--help"}},
+	opts:      omnienv.Opts{Params: []string{"bash", "--help"}},
 }}
 
 func TestArgs(t *testing.T) {
 	for _, test := range argsTests {
 		if test.opts.Params == nil {
-			// default initializer in the test for Params will be
-			// nil, but actual no Params will be an empty array.
 			test.opts.Params = []string{}
 		}
 

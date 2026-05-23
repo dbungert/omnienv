@@ -1,4 +1,4 @@
-package main
+package omnienv
 
 import (
 	"bytes"
@@ -45,7 +45,7 @@ func (app App) start() error {
 	return nil
 }
 
-func (app App) startIfNeeded() error {
+func (app App) StartIfNeeded() error {
 	cmd := command("lxc", "info", app.name())
 	slog.Debug("run", "command", cmd.Args)
 	out, err := cmd.Output()
@@ -91,7 +91,7 @@ func (app App) isVM() (bool, error) {
 	return false, fmt.Errorf("could not determine type of instance %s", app.name())
 }
 
-func (app App) wait() error {
+func (app App) Wait() error {
 	vm, err := app.isVM()
 	if err != nil {
 		return err
@@ -194,6 +194,7 @@ func (app App) lp1878225Quirk() error {
 		return fmt.Errorf("bus wait failure: %w", err)
 	}
 
+	// the actual workaround
 	if err := app.lxcExec("systemctl", "stop", "snapd.seeded.service"); err != nil {
 		return fmt.Errorf("seeded stop failure: %w", err)
 	}
@@ -201,9 +202,9 @@ func (app App) lp1878225Quirk() error {
 	return nil
 }
 
-func (app App) launch() error {
+func (app App) Launch() error {
 	args := []string{"lxc", "launch", app.launchImage(), app.name()}
-	if app.Config.IsVM() {
+	if app.Config.isVM() {
 		args = append(args, "--vm")
 	}
 
@@ -211,13 +212,13 @@ func (app App) launch() error {
 	slog.Debug("run", "command", args)
 	cmd.Stdout = os.Stdout
 	user := CurrentUserInfo()
-	cmd.Stdin = bytes.NewReader([]byte(app.Config.LXDLaunchConfig(user)))
+	cmd.Stdin = bytes.NewReader([]byte(app.Config.lxdLaunchConfig(user)))
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to create instance: %w", err)
 	}
 
-	if err := app.wait(); err != nil {
+	if err := app.Wait(); err != nil {
 		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
@@ -245,12 +246,12 @@ func (app App) sudoLogin(script string) []string {
 	}
 }
 
-func (app App) shell() error {
-	if err := app.startIfNeeded(); err != nil {
+func (app App) Shell() error {
+	if err := app.StartIfNeeded(); err != nil {
 		return fmt.Errorf("failed to start instance: %w", err)
 	}
 
-	if err := app.wait(); err != nil {
+	if err := app.Wait(); err != nil {
 		return fmt.Errorf("failed to wait for instance: %w", err)
 	}
 
@@ -267,7 +268,6 @@ func (app App) shell() error {
 
 	script := fmt.Sprintf(`cd "%s" && exec $SHELL`, dest)
 	if len(app.Opts.Params) > 0 {
-		// run shell with the command we were given
 		script = fmt.Sprintf(
 			`%s -c "%s"`, script,
 			shellescape.QuoteCommand(app.Opts.Params),

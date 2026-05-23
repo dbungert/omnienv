@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"io"
 	"log/slog"
 	"strings"
 	"testing"
@@ -23,8 +22,9 @@ var logTests = []struct {
 
 func patchLogger() (func(), *bytes.Buffer) {
 	buf := &bytes.Buffer{}
-	var mockStderr io.Writer = buf
-	return Patch(&stderr, mockStderr), buf
+	original := stderr
+	stderr = buf
+	return func() { stderr = original }, buf
 }
 
 func TestSetupLogging(t *testing.T) {
@@ -33,7 +33,7 @@ func TestSetupLogging(t *testing.T) {
 
 	for _, test := range logTests {
 		buf.Reset()
-		setupLogging(Opts{Verbose: test.verbose})
+		setupLogging(test.verbose)
 
 		slog.Info("info")
 		slog.Debug("debug")

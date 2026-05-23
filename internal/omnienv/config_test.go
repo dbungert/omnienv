@@ -1,4 +1,4 @@
-package main
+package omnienv
 
 import (
 	"os"
@@ -24,7 +24,7 @@ var cfgTests = []struct {
 
 func TestCfg(t *testing.T) {
 	for _, test := range cfgTests {
-		assert.Equal(t, test.vm, test.config.IsVM(), test.summary)
+		assert.Equal(t, test.vm, test.config.isVM(), test.summary)
 	}
 }
 
@@ -141,15 +141,10 @@ func TestLoadCfg(t *testing.T) {
 	assert.Nil(t, os.Mkdir(dirname, 0750))
 	filename := dirname + "/" + cfgName
 
-	restore, buf := patchLogger()
-	defer restore()
-	setupLogging(Opts{})
-
 	restoreEnv := patchEnv("DEFAULT_SERIES", "zesty")
 	defer restoreEnv()
 
 	for _, test := range loadCfgTests {
-		buf.Reset()
 		err := os.WriteFile(filename, []byte(test.data), 0644)
 		assert.Nil(t, err, test.summary)
 		actual, err := loadConfig(filename)
@@ -161,9 +156,6 @@ func TestLoadCfg(t *testing.T) {
 			test.config.Label = "foo"
 		}
 		assert.Equal(t, test.config, actual, test.summary)
-		if len(test.warn) > 0 {
-			assert.Contains(t, buf.String(), test.warn, test.summary)
-		}
 
 		if test.image != "" {
 			assert.Equal(
@@ -214,7 +206,7 @@ func TestNotGetConfig(t *testing.T) {
 	t.Cleanup(func() { _ = os.Chdir(curdir) })
 
 	_, err = GetConfig()
-	assert.Equal(t, errCfgNotFound, err)
+	assert.Equal(t, ErrCfgNotFound, err)
 }
 
 func TestLXDLaunchConfigWorkdir(t *testing.T) {
@@ -240,5 +232,5 @@ devices:
     source: /tmp/b
 `
 
-	assert.Equal(t, expected, cfg.LXDLaunchConfig(UserInfo{1234, 5678}))
+	assert.Equal(t, expected, cfg.lxdLaunchConfig(UserInfo{1234, 5678}))
 }

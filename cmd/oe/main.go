@@ -5,22 +5,9 @@ import (
 	"log/slog"
 	"os"
 	"runtime/debug"
+
+	"github.com/dbungert/omnienv/internal/omnienv"
 )
-
-func run(args ...string) error {
-	cmd := command(args[0], args[1:]...)
-	slog.Debug("run", "command", args)
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
-func runDevNull(args ...string) error {
-	cmd := command(args[0], args[1:]...)
-	slog.Debug("run", "command", args)
-	return cmd.Run()
-}
 
 func Run() error {
 	opts, err := GetOpts(os.Args[1:])
@@ -37,23 +24,23 @@ func Run() error {
 		return nil
 	}
 
-	setupLogging(opts)
+	setupLogging(opts.Verbose)
 	slog.Debug("cmdline", "opts", opts)
 
-	cfg, err := GetConfig()
+	cfg, err := omnienv.GetConfig()
 	if err != nil {
 		return fmt.Errorf("fatal error: %w", err)
 	}
 
-	app := App{Config: cfg, Opts: opts}
+	app := omnienv.App{Config: cfg, Opts: opts}
 
 	if opts.Launch {
-		if err := app.launch(); err != nil {
+		if err := app.Launch(); err != nil {
 			return fmt.Errorf("failed to launch: %w", err)
 		}
 	}
 
-	if err := app.shell(); err != nil {
+	if err := app.Shell(); err != nil {
 		return fmt.Errorf("failed to create shell: %w", err)
 	}
 
