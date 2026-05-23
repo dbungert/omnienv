@@ -97,3 +97,45 @@ func TestStartIfNeededNoStatus(t *testing.T) {
 	err := app.StartIfNeeded()
 	assert.ErrorContains(t, err, "could not determine status")
 }
+
+func TestIsVMVM(t *testing.T) {
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Type: virtual-machine")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	vm, err := app.isVM()
+	assert.Nil(t, err)
+	assert.True(t, vm)
+}
+
+func TestIsVMContainer(t *testing.T) {
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Type: container")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	vm, err := app.isVM()
+	assert.Nil(t, err)
+	assert.False(t, vm)
+}
+
+func TestIsVMInfoFails(t *testing.T) {
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/false")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	_, err := app.isVM()
+	assert.ErrorContains(t, err, "failed to get instance info")
+}
+
+func TestIsVMNoType(t *testing.T) {
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Status: RUNNING")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	_, err := app.isVM()
+	assert.ErrorContains(t, err, "could not determine type")
+}
