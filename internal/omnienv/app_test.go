@@ -1,6 +1,7 @@
 package omnienv
 
 import (
+	"context"
 	"os/exec"
 	"testing"
 	"time"
@@ -228,4 +229,74 @@ func TestWaitVMEventualSuccess(t *testing.T) {
 	defer restoreSleep()
 	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
 	assert.Nil(t, app.Wait())
+}
+
+func TestIsUbuntuJammyTrue(t *testing.T) {
+	callCount := 0
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		callCount++
+		if callCount == 1 {
+			return exec.Command("/bin/echo", "Ubuntu")
+		}
+		return exec.Command("/bin/echo", "22.04")
+	})
+	defer restoreCmdCtx()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	jammy, err := app.isUbuntuJammy()
+	assert.Nil(t, err)
+	assert.True(t, jammy)
+}
+
+func TestIsUbuntuJammyNotUbuntu(t *testing.T) {
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Debian")
+	})
+	defer restoreCmdCtx()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	jammy, err := app.isUbuntuJammy()
+	assert.Nil(t, err)
+	assert.False(t, jammy)
+}
+
+func TestIsUbuntuJammyFirstFails(t *testing.T) {
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/false")
+	})
+	defer restoreCmdCtx()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	jammy, err := app.isUbuntuJammy()
+	assert.Nil(t, err)
+	assert.False(t, jammy)
+}
+
+func TestIsUbuntuJammyWrongVersion(t *testing.T) {
+	callCount := 0
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		callCount++
+		if callCount == 1 {
+			return exec.Command("/bin/echo", "Ubuntu")
+		}
+		return exec.Command("/bin/echo", "24.04")
+	})
+	defer restoreCmdCtx()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	jammy, err := app.isUbuntuJammy()
+	assert.Nil(t, err)
+	assert.False(t, jammy)
+}
+
+func TestIsUbuntuJammyVersionFails(t *testing.T) {
+	callCount := 0
+	restoreCmdCtx := Patch(&commandContext, func(_ context.Context, _ string, _ ...string) *exec.Cmd {
+		callCount++
+		if callCount == 1 {
+			return exec.Command("/bin/echo", "Ubuntu")
+		}
+		return exec.Command("/bin/false")
+	})
+	defer restoreCmdCtx()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	jammy, err := app.isUbuntuJammy()
+	assert.Nil(t, err)
+	assert.False(t, jammy)
 }
