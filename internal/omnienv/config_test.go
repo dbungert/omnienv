@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 )
 
 var cfgTests = []struct {
@@ -233,4 +234,24 @@ devices:
 `
 
 	assert.Equal(t, expected, cfg.lxdLaunchConfig(UserInfo{1234, 5678}))
+}
+
+func TestUnmarshalSystemEmptyMap(t *testing.T) {
+	data := []byte("system: {}")
+	var cfg Config
+	err := yaml.Unmarshal(data, &cfg)
+	assert.ErrorContains(t, err, "empty system map")
+}
+
+func TestUnmarshalSystemMultipleKeys(t *testing.T) {
+	data := []byte(`
+system:
+  jammy:
+    image: ubuntu:j
+  noble:
+    image: ubuntu:n
+`)
+	var cfg Config
+	err := yaml.Unmarshal(data, &cfg)
+	assert.ErrorContains(t, err, "multiple system keys")
 }

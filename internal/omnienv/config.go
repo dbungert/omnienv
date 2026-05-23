@@ -47,10 +47,17 @@ func (sys *System) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// if map with single key, unmarshal key to Name and set Image
 	var dict map[string]image
 	if err = unmarshal(&dict); err == nil {
-		for name, img := range dict {
-			*sys = System{Name: name, Image: img.Image}
+		switch len(dict) {
+		case 0:
+			return errors.New("empty system map")
+		case 1:
+			for name, img := range dict {
+				*sys = System{Name: name, Image: img.Image}
+			}
+			return nil
+		default:
+			return errors.New("multiple system keys, expected one")
 		}
-		return nil
 	}
 
 	return err

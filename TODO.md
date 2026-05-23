@@ -30,7 +30,7 @@ Items from a code review of the current codebase, ordered by rough priority.
   }
   ```
 
-- [ ] **Validate `UnmarshalYAML` map-parsing edge case** (`cfg.go:33-57`). If the map
+- [X] **Validate `UnmarshalYAML` map-parsing edge case** (`cfg.go:33-57`). If the map
   branch succeeds with an empty map, `System` gets zero-valued silently. Multiple map
   keys also silently overwrite (last wins). Add validation.
 
