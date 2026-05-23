@@ -3,6 +3,7 @@ package omnienv
 import (
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -138,4 +139,93 @@ func TestIsVMNoType(t *testing.T) {
 	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
 	_, err := app.isVM()
 	assert.ErrorContains(t, err, "could not determine type")
+}
+
+func TestWaitNotVM(t *testing.T) {
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		return exec.Command("/bin/echo", "Type: container")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	assert.Nil(t, app.Wait())
+}
+
+func TestWaitVMExecOk(t *testing.T) {
+	callCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		callCount++
+		if callCount == 1 {
+			return exec.Command("/bin/echo", "Type: virtual-machine")
+		}
+		return exec.Command("/bin/true")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	assert.Nil(t, app.Wait())
+}
+
+func TestWaitVMExecFailsNonExitError(t *testing.T) {
+	callCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		callCount++
+		if callCount == 1 {
+			return exec.Command("/bin/echo", "Type: virtual-machine")
+		}
+		return exec.Command("/nonexistent-binary")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.Wait()
+	assert.Error(t, err)
+}
+
+func TestWaitVMStrangeExitCode(t *testing.T) {
+	callCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		callCount++
+		if callCount == 1 {
+			return exec.Command("/bin/echo", "Type: virtual-machine")
+		}
+		return exec.Command("/bin/false")
+	})
+	defer restoreCmd()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.Wait()
+	assert.ErrorContains(t, err, "strange exit code 1")
+}
+
+func TestWaitVMTimeout(t *testing.T) {
+	callCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		callCount++
+		if callCount == 1 {
+			return exec.Command("/bin/echo", "Type: virtual-machine")
+		}
+		return exec.Command("/bin/sh", "-c", "exit 255")
+	})
+	defer restoreCmd()
+	restoreSleep := Patch(&timeSleep, func(_ time.Duration) {})
+	defer restoreSleep()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	err := app.Wait()
+	assert.ErrorContains(t, err, "timed out waiting")
+}
+
+func TestWaitVMEventualSuccess(t *testing.T) {
+	callCount := 0
+	restoreCmd := Patch(&command, func(_ string, _ ...string) *exec.Cmd {
+		callCount++
+		if callCount == 1 {
+			return exec.Command("/bin/echo", "Type: virtual-machine")
+		}
+		if callCount < 5 {
+			return exec.Command("/bin/sh", "-c", "exit 255")
+		}
+		return exec.Command("/bin/true")
+	})
+	defer restoreCmd()
+	restoreSleep := Patch(&timeSleep, func(_ time.Duration) {})
+	defer restoreSleep()
+	app := App{Config: Config{Label: "l", System: NewSystem("s")}}
+	assert.Nil(t, app.Wait())
 }
