@@ -6,6 +6,7 @@ build: oe
 
 oe:
 	go build ./cmd/$@
+.PHONY: oe
 
 test:
 	go test -cover -failfast ./...
