@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 var cfgName = ".omnienv.yaml"
@@ -34,18 +34,17 @@ func (sys *System) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	// if string, unmarshal to Name and done
 	var err error
 	var name string
-
 	if err = unmarshal(&name); err == nil {
 		*sys = NewSystem(name)
 		return nil
 	}
 
-	type image struct {
+	type systemImage struct {
 		Image string
 	}
 
 	// if map with single key, unmarshal key to Name and set Image
-	var dict map[string]image
+	var dict map[string]systemImage
 	if err = unmarshal(&dict); err == nil {
 		switch len(dict) {
 		case 0:
@@ -75,7 +74,7 @@ type Config struct {
 	// RootDir is the writable base directory that the container has access
 	// to.  This field is optional, and if unsupplied uses the parent
 	// directory of the omnienv.yaml config.
-	RootDir string
+	RootDir string `yaml:"basedir"`
 	// Backend indicates upon what we are running the instance.
 	// Only "lxd" is implemented.
 	Backend string
