@@ -33,13 +33,8 @@ func TestStartIfNeeded_ConnectFail(t *testing.T) {
 }
 
 func TestLxcExec(t *testing.T) {
-	restoreLP := Patch(&lookPath, func(file string) (string, error) {
-		return "/foo/lxc", nil
-	})
-	defer restoreLP()
-
 	restoreCmd := Patch(&command, func(arg0 string, argv ...string) *exec.Cmd {
-		assert.Equal(t, "/foo/lxc", arg0)
+		assert.Equal(t, "lxc", arg0)
 		assert.Equal(t, []string{"exec", "-", "--", "bar"}, argv)
 		cmd := exec.Command("/bin/true")
 		cmd.Args = append([]string{arg0}, argv...)
@@ -47,13 +42,4 @@ func TestLxcExec(t *testing.T) {
 	})
 	defer restoreCmd()
 	assert.Nil(t, App{}.lxcExec("bar"))
-}
-
-func TestLxcExecFailedLookup(t *testing.T) {
-	err := errors.New("error")
-	restoreLP := Patch(&lookPath, func(file string) (string, error) {
-		return "", err
-	})
-	defer restoreLP()
-	assert.Equal(t, err, App{}.lxcExec(""))
 }

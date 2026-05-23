@@ -127,13 +127,9 @@ func (app App) wait() error {
 	}
 }
 
-func (app App) lxcRun(args ...string) error {
+func (app App) lxcExec(args ...string) error {
 	cmd := append([]string{"lxc", "exec", app.name(), "--"}, args...)
-	slog.Debug("run", "command", cmd)
-	if err := run(cmd...); err != nil {
-		return fmt.Errorf("cmd %v failure: %w", cmd, err)
-	}
-	return nil
+	return run(cmd...)
 }
 
 func (app App) lxcOutput(args ...string) (string, error) {
@@ -189,11 +185,11 @@ func (app App) lp1878225Quirk() error {
 	[ -e /run/dbus/system_bus_socket ]
 	`
 
-	if err := app.lxcRun("sh", "-c", script); err != nil {
+	if err := app.lxcExec("sh", "-c", script); err != nil {
 		return fmt.Errorf("bus wait failure: %w", err)
 	}
 
-	if err := app.lxcRun("systemctl", "stop", "snapd.seeded.service"); err != nil {
+	if err := app.lxcExec("systemctl", "stop", "snapd.seeded.service"); err != nil {
 		return fmt.Errorf("seeded stop failure: %w", err)
 	}
 
@@ -223,7 +219,7 @@ func (app App) launch() error {
 	use_pty := []string{
 		"sh", "-c", "echo 'Defaults use_pty' > /etc/sudoers.d/use_pty",
 	}
-	if err := app.lxcRun(use_pty...); err != nil {
+	if err := app.lxcExec(use_pty...); err != nil {
 		return fmt.Errorf("use_pty setup failure: %w", err)
 	}
 
@@ -231,7 +227,7 @@ func (app App) launch() error {
 		return fmt.Errorf("LP #1878225 workaround failure: %w", err)
 	}
 
-	if err := app.lxcRun("cloud-init", "status", "--wait"); err != nil {
+	if err := app.lxcExec("cloud-init", "status", "--wait"); err != nil {
 		return fmt.Errorf("cloud-init failure: %w", err)
 	}
 	return nil
@@ -242,17 +238,6 @@ func (app App) sudoLogin(script string) []string {
 		"sudo", "--login", "--user", "user",
 		"sh", "-c", script,
 	}
-}
-
-func (app App) lxcExec(args ...string) error {
-	lxc, err := lookPath("lxc")
-	if err != nil {
-		return err
-	}
-
-	cmd := append([]string{lxc, "exec", app.name(), "--"}, args...)
-	slog.Debug("run", "command", cmd)
-	return run(cmd...)
 }
 
 func (app App) shell() error {
